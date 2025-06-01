@@ -1,5 +1,4 @@
 import { 
-  HomeIcon, 
   UsersIcon, 
   FileTextIcon, 
   DollarSignIcon, 
@@ -7,9 +6,13 @@ import {
   BookOpenIcon, 
   ShieldCheckIcon, 
   MessageSquareIcon,
-  BuildingIcon,
   UserIcon,
-  SettingsIcon
+  SettingsIcon,
+  BadgeIcon,
+  TrendingUpIcon,
+  ZapIcon,
+  CalendarIcon,
+  BriefcaseIcon
 } from "lucide-react";
 import Index from "./pages/Index";
 import Recruitment from "./pages/Recruitment";
@@ -19,28 +22,26 @@ import Performance from "./pages/Performance";
 import Training from "./pages/Training";
 import Compliance from "./pages/Compliance";
 import Communications from "./pages/Communications";
-import CompanyInfo from "./pages/CompanyInfo";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import Certifications from "./pages/Certifications";
+import Analytics from "./pages/Analytics";
+import Workflows from "./pages/Workflows";
+import LeaveManagement from "./pages/LeaveManagement";
+import EmployeeDashboard from "./pages/EmployeeDashboard";
 
 export const navItems = [
   {
-    title: "Dashboard",
-    to: "/",
-    icon: <HomeIcon className="h-4 w-4" />,
-    page: <Index />,
+    title: "Employee Dashboard",
+    to: "/employee-dashboard",
+    icon: <BriefcaseIcon className="h-4 w-4" />,
+    page: <EmployeeDashboard />,
   },
   {
     title: "Admin Panel",
     to: "/admin",
     icon: <SettingsIcon className="h-4 w-4" />,
     page: <Admin />,
-  },
-  {
-    title: "Company Info",
-    to: "/company",
-    icon: <BuildingIcon className="h-4 w-4" />,
-    page: <CompanyInfo />,
   },
   {
     title: "Recruitment",
@@ -53,6 +54,12 @@ export const navItems = [
     to: "/employees",
     icon: <FileTextIcon className="h-4 w-4" />,
     page: <EmployeeRecords />,
+  },
+  {
+    title: "Leave Management",
+    to: "/leave",
+    icon: <CalendarIcon className="h-4 w-4" />,
+    page: <LeaveManagement />,
   },
   {
     title: "Payroll & Leave",
@@ -73,6 +80,24 @@ export const navItems = [
     page: <Training />,
   },
   {
+    title: "Banking Certifications",
+    to: "/certifications",
+    icon: <BadgeIcon className="h-4 w-4" />,
+    page: <Certifications />,
+  },
+  {
+    title: "Analytics Dashboard",
+    to: "/analytics",
+    icon: <TrendingUpIcon className="h-4 w-4" />,
+    page: <Analytics />,
+  },
+  {
+    title: "Workflow Automation",
+    to: "/workflows",
+    icon: <ZapIcon className="h-4 w-4" />,
+    page: <Workflows />,
+  },
+  {
     title: "Compliance",
     to: "/compliance",
     icon: <ShieldCheckIcon className="h-4 w-4" />,
@@ -91,3 +116,9 @@ export const navItems = [
     page: <Profile />,
   },
 ];
+
+// Export a separate root route component
+export const rootRoute = {
+  to: "/",
+  page: <Index />,
+};

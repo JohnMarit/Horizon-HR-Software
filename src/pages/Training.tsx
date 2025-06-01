@@ -36,7 +36,10 @@ import {
   GraduationCapIcon,
   EyeIcon,
   UserCheckIcon,
-  XCircleIcon
+  XCircleIcon,
+  CheckIcon,
+  PlayIcon,
+  RefreshCwIcon
 } from "lucide-react";
 
 // Interfaces
@@ -1041,6 +1044,151 @@ export default function Training() {
   const totalCompletions = enrollments.filter(e => e.status === 'Completed').length;
   const completionRate = totalEnrollments > 0 ? Math.round((totalCompletions / totalEnrollments) * 100) : 0;
 
+  // Helper function to check if current user is enrolled in a course
+  const isUserEnrolledInCourse = (courseId: number) => {
+    if (!user?.email) return false;
+    
+    // Find employee with same logic as enrollment
+    let employee = employees.find(e => e.name.toLowerCase().includes(user.email?.split('@')[0] || ''));
+    
+    // If not found, try alternative matching for HR users
+    if (!employee) {
+      const userEmail = user.email?.toLowerCase() || '';
+      
+      // Direct email-to-name mapping for HR users
+      if (userEmail.includes('sarah') || userEmail.includes('hr')) {
+        employee = employees.find(e => e.name.toLowerCase().includes('sarah'));
+      } else if (userEmail.includes('james')) {
+        employee = employees.find(e => e.name.toLowerCase().includes('james'));
+      }
+      
+      // Create a temporary employee record if still not found
+      if (!employee) {
+        employee = {
+          id: user.id || 'USR' + Date.now(),
+          name: user.email?.split('@')[0] || 'User',
+          department: (hasPermission('*') || hasPermission('training.manage') || hasPermission('communications.manage')) 
+            ? 'Human Resources' 
+            : 'General Staff'
+        };
+      }
+    }
+
+    // Check if already enrolled
+    const existingEnrollment = enrollments.find(e => 
+      e.courseId === courseId && e.employeeId === employee.id
+    );
+
+    return !!existingEnrollment;
+  };
+
+  // Helper function to get user's enrollment status for a course
+  const getUserEnrollmentStatus = (courseId: number) => {
+    if (!user?.email) return null;
+    
+    // Find employee with same logic as enrollment
+    let employee = employees.find(e => e.name.toLowerCase().includes(user.email?.split('@')[0] || ''));
+    
+    // If not found, try alternative matching for HR users
+    if (!employee) {
+      const userEmail = user.email?.toLowerCase() || '';
+      
+      // Direct email-to-name mapping for HR users
+      if (userEmail.includes('sarah') || userEmail.includes('hr')) {
+        employee = employees.find(e => e.name.toLowerCase().includes('sarah'));
+      } else if (userEmail.includes('james')) {
+        employee = employees.find(e => e.name.toLowerCase().includes('james'));
+      }
+      
+      // Create a temporary employee record if still not found
+      if (!employee) {
+        employee = {
+          id: user.id || 'USR' + Date.now(),
+          name: user.email?.split('@')[0] || 'User',
+          department: (hasPermission('*') || hasPermission('training.manage') || hasPermission('communications.manage')) 
+            ? 'Human Resources' 
+            : 'General Staff'
+        };
+      }
+    }
+
+    // Find enrollment
+    const enrollment = enrollments.find(e => 
+      e.courseId === courseId && e.employeeId === employee.id
+    );
+
+    return enrollment;
+  };
+
+  // Helper function to render enrollment button based on user's enrollment status
+  const renderEnrollmentButton = (course: Course) => {
+    const isEnrolled = isUserEnrolledInCourse(course.id);
+    const enrollmentStatus = getUserEnrollmentStatus(course.id);
+    
+    if (isEnrolled && enrollmentStatus) {
+      switch (enrollmentStatus.status) {
+        case 'Completed':
+          return (
+            <Button 
+              size="sm" 
+              className="flex-1"
+              disabled
+              variant="outline"
+            >
+              <CheckIcon className="h-4 w-4 mr-1" />
+              Completed
+            </Button>
+          );
+        case 'In Progress':
+          return (
+            <Button 
+              size="sm" 
+              className="flex-1"
+              disabled
+              variant="outline"
+            >
+              <PlayIcon className="h-4 w-4 mr-1" />
+              In Progress
+            </Button>
+          );
+        case 'Failed':
+          return (
+            <Button 
+              size="sm" 
+              className="flex-1"
+              onClick={() => handleEmployeeSelfEnroll(course.id)}
+            >
+              <RefreshCwIcon className="h-4 w-4 mr-1" />
+              Re-enroll
+            </Button>
+          );
+        default: // 'Enrolled'
+          return (
+            <Button 
+              size="sm" 
+              className="flex-1"
+              disabled
+              variant="outline"
+            >
+              <UserCheckIcon className="h-4 w-4 mr-1" />
+              Enrolled
+            </Button>
+          );
+      }
+    } else {
+      return (
+        <Button 
+          size="sm" 
+          className="flex-1"
+          onClick={() => handleEmployeeSelfEnroll(course.id)}
+        >
+          <UserCheckIcon className="h-4 w-4 mr-1" />
+          Enroll Now
+        </Button>
+      );
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -1241,14 +1389,7 @@ export default function Training() {
                     </div>
 
                     <div className="flex gap-2 pt-2">
-                      <Button 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => handleEmployeeSelfEnroll(course.id)}
-                      >
-                        <UserCheckIcon className="h-4 w-4 mr-1" />
-                        Enroll Now
-                      </Button>
+                      {renderEnrollmentButton(course)}
                       <Button variant="outline" size="sm">
                         <FileTextIcon className="h-4 w-4 mr-1" />
                         Details

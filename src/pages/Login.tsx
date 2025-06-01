@@ -101,18 +101,22 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
         {/* Left side - Branding */}
         <div className="hidden lg:block space-y-8">
           <div className="space-y-4">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-2xl">HB</span>
+              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg p-3">
+                <img 
+                  src="/src/img/horizon-logo.png" 
+                  alt="Horizon Bank Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-4xl font-bold text-gray-900">Horizon Bank</h1>
-                <p className="text-xl text-blue-600 font-medium">South Sudan</p>
+                <p className="text-xl text-amber-600 font-medium">South Sudan</p>
                 <p className="text-lg text-gray-600">Secure HR Management System</p>
               </div>
             </div>
@@ -124,26 +128,26 @@ export default function Login() {
             </h2>
             <div className="space-y-4 text-gray-600">
               <div className="flex items-center gap-3">
-                <ShieldCheckIcon className="w-5 h-5 text-blue-600" />
+                <ShieldCheckIcon className="w-5 h-5 text-amber-600" />
                 <span>Two-Factor Authentication (2FA) protection</span>
               </div>
               <div className="flex items-center gap-3">
-                <KeyIcon className="w-5 h-5 text-blue-600" />
+                <KeyIcon className="w-5 h-5 text-amber-600" />
                 <span>Role-based access control with audit logging</span>
               </div>
               <div className="flex items-center gap-3">
-                <LockIcon className="w-5 h-5 text-blue-600" />
+                <LockIcon className="w-5 h-5 text-amber-600" />
                 <span>Session timeout and activity monitoring</span>
               </div>
               <div className="flex items-center gap-3">
-                <AlertCircleIcon className="w-5 h-5 text-blue-600" />
+                <AlertCircleIcon className="w-5 h-5 text-amber-600" />
                 <span>Account lockout protection</span>
               </div>
             </div>
 
-            <div className="mt-8 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-600">
-              <h3 className="font-semibold text-blue-900 mb-2">Security Notice</h3>
-              <p className="text-sm text-blue-800">
+            <div className="mt-8 p-4 bg-amber-50 rounded-lg border-l-4 border-amber-600">
+              <h3 className="font-semibold text-amber-900 mb-2">Security Notice</h3>
+              <p className="text-sm text-amber-800">
                 This system implements enterprise-grade security measures including audit logging, 
                 session management, and multi-factor authentication for high-privilege accounts.
               </p>
@@ -156,12 +160,16 @@ export default function Login() {
           <Card className="border-0 shadow-2xl">
             <CardHeader className="space-y-2 text-center pb-6">
               <div className="lg:hidden flex items-center justify-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">HB</span>
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg p-2">
+                  <img 
+                    src="/src/img/horizon-logo.png" 
+                    alt="Horizon Bank Logo" 
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div className="text-left">
                   <span className="text-2xl font-bold text-gray-900 block">Horizon Bank</span>
-                  <span className="text-sm text-blue-600">Secure HR System</span>
+                  <span className="text-sm text-amber-600">Secure HR System</span>
                 </div>
               </div>
               <CardTitle className="text-2xl font-bold text-gray-900">
@@ -241,7 +249,7 @@ export default function Login() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                  className="w-full h-12 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -271,7 +279,7 @@ export default function Login() {
                     setPassword(user.password);
                     setError('');
                   }}
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-blue-50 cursor-pointer transition-colors"
+                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-amber-50 cursor-pointer transition-colors"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -302,6 +310,10 @@ export default function Login() {
               <span>Kokora Road, Nimra Talata, Juba</span>
               <span>•</span>
               <span>+211 920 961 800</span>
+            </div>
+            <div className="text-xs">
+              <span>info@horizonbankss.com • </span>
+              <span>Mon-Fri: 8:30-17:00, Sat: 9:00-12:00</span>
             </div>
           </div>
         </div>

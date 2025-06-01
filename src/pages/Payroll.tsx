@@ -988,240 +988,327 @@ export default function Payroll() {
         </TabsContent>
 
         <TabsContent value="leave" className="space-y-6">
-          {/* Search and Filters */}
-          <Card className="border-0 shadow-md">
+          {/* Enhanced Header Section */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Leave Management</h2>
+                <p className="text-gray-600 text-sm">Manage employee leave requests, approvals, and track leave balances</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button 
+                  onClick={() => setShowLeaveRequestDialog(true)}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md transition-all duration-200 hover:shadow-lg min-h-[44px]"
+                >
+                  <PlusIcon className="mr-2 h-4 w-4" />
+                  Request Leave
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50 min-h-[44px]"
+                >
+                  <DownloadIcon className="mr-2 h-4 w-4" />
+                  Export Report
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Search and Filters */}
+          <Card className="border-0 shadow-md bg-white">
             <CardContent className="p-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-center">
                 <div className="relative flex-1">
                   <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 text-gray-400 transform -translate-y-1/2" />
                   <Input
-                    placeholder="Search leave requests..."
+                    placeholder="Search by employee name, type, or reason..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline">
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="outline" className="min-h-[44px] border-gray-200 hover:bg-gray-50">
                     <FilterIcon className="mr-2 h-4 w-4" />
-                    Filter by Status
+                    Status
                   </Button>
-                  <Button variant="outline">
+                  <Button variant="outline" className="min-h-[44px] border-gray-200 hover:bg-gray-50">
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    Filter by Type
+                    Leave Type
                   </Button>
-                  <Button 
-                    onClick={() => setShowLeaveRequestDialog(true)}
-                    className="bg-gradient-to-r from-blue-600 to-blue-700"
-                  >
-                      <PlusIcon className="mr-2 h-4 w-4" />
-                      Request Leave
-                    </Button>
+                  <Button variant="outline" className="min-h-[44px] border-gray-200 hover:bg-gray-50">
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    Department
+                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Leave Statistics */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-yellow-100">
-                    <ClockIcon className="h-4 w-4 text-yellow-600" />
-                  </div>
+          {/* Enhanced Leave Statistics */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card className="border-0 shadow-md bg-gradient-to-br from-amber-50 to-orange-50 border-l-4 border-l-amber-400">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Pending</p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-sm font-semibold text-amber-700 uppercase tracking-wide">Pending Approval</p>
+                    <p className="text-3xl font-bold text-amber-900 mt-2">
                       {leaveRequests.filter(l => l.status === 'Pending Approval').length}
                     </p>
+                    <p className="text-xs text-amber-600 mt-1">Requires review</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-amber-100">
+                    <ClockIcon className="h-6 w-6 text-amber-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-green-100">
-                    <CheckCircleIcon className="h-4 w-4 text-green-600" />
-                  </div>
+            
+            <Card className="border-0 shadow-md bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-l-green-400">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Approved</p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-sm font-semibold text-green-700 uppercase tracking-wide">Approved</p>
+                    <p className="text-3xl font-bold text-green-900 mt-2">
                       {leaveRequests.filter(l => l.status === 'Approved').length}
                     </p>
+                    <p className="text-xs text-green-600 mt-1">This month</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-green-100">
+                    <CheckCircleIcon className="h-6 w-6 text-green-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-red-100">
-                    <XCircleIcon className="h-4 w-4 text-red-600" />
-                  </div>
+            
+            <Card className="border-0 shadow-md bg-gradient-to-br from-red-50 to-rose-50 border-l-4 border-l-red-400">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Rejected</p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-sm font-semibold text-red-700 uppercase tracking-wide">Rejected</p>
+                    <p className="text-3xl font-bold text-red-900 mt-2">
                       {leaveRequests.filter(l => l.status === 'Rejected').length}
                     </p>
+                    <p className="text-xs text-red-600 mt-1">This month</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-red-100">
+                    <XCircleIcon className="h-6 w-6 text-red-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-blue-100">
-                    <CalendarIcon className="h-4 w-4 text-blue-600" />
-                  </div>
+            
+            <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-indigo-50 border-l-4 border-l-blue-400">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Days</p>
-                    <p className="text-lg font-bold text-gray-900">
+                    <p className="text-sm font-semibold text-blue-700 uppercase tracking-wide">Total Days</p>
+                    <p className="text-3xl font-bold text-blue-900 mt-2">
                       {leaveRequests.filter(l => l.status === 'Approved').reduce((sum, l) => sum + l.days, 0)}
                     </p>
+                    <p className="text-xs text-blue-600 mt-1">Approved leave</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-blue-100">
+                    <CalendarIcon className="h-6 w-6 text-blue-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Leave Requests Table */}
-          <Card className="border-0 shadow-md">
+          {/* Enhanced Leave Requests Table */}
+          <Card className="border-0 shadow-lg bg-white overflow-hidden">
+            <CardHeader className="bg-gray-50 border-b border-gray-100 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-bold text-gray-900">Leave Requests</CardTitle>
+                  <CardDescription className="text-gray-600 mt-1">
+                    Review and manage employee leave applications
+                  </CardDescription>
+                </div>
+                <Badge variant="outline" className="text-sm px-3 py-1">
+                  {filteredLeaves.length} requests
+                </Badge>
+              </div>
+            </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b border-gray-100">
-                    <TableHead>Employee</TableHead>
-                    <TableHead>Leave Type</TableHead>
-                    <TableHead>Period</TableHead>
-                    <TableHead>Days</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLeaves.map((leave) => (
-                    <TableRow key={leave.id} className="border-b border-gray-50">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-blue-100 text-blue-700">
-                              {leave.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium text-gray-900">{leave.name}</p>
-                            <p className="text-sm text-gray-500">{leave.department}</p>
-                            <p className="text-xs text-gray-400">{leave.employeeId}</p>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-gray-50/50">
+                    <TableRow className="border-b border-gray-100">
+                      <TableHead className="font-semibold text-gray-700 py-4 px-6">Employee</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Leave Type</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Duration & Reason</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4 text-center">Days</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Status</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Timeline</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4 text-center">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredLeaves.map((leave) => (
+                      <TableRow key={leave.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
+                        <TableCell className="py-4 px-6">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10 border-2 border-gray-100">
+                              <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold text-sm">
+                                {leave.name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-semibold text-gray-900">{leave.name}</p>
+                              <p className="text-sm text-gray-500">{leave.department}</p>
+                              <p className="text-xs text-gray-400">ID: {leave.employeeId}</p>
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
+                        </TableCell>
+                        <TableCell className="py-4">
+                          <Badge 
+                            variant="outline" 
+                            className={`font-medium ${
+                              leave.leaveType === 'Annual Leave' ? 'border-blue-200 text-blue-700 bg-blue-50' :
+                              leave.leaveType === 'Sick Leave' ? 'border-orange-200 text-orange-700 bg-orange-50' :
+                              leave.leaveType === 'Maternity Leave' ? 'border-pink-200 text-pink-700 bg-pink-50' :
+                              leave.leaveType === 'Emergency Leave' ? 'border-red-200 text-red-700 bg-red-50' :
+                              'border-purple-200 text-purple-700 bg-purple-50'
+                            }`}
+                          >
                             {leave.leaveType}
                           </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="text-sm text-gray-900 font-medium">
-                            {leave.startDate} to {leave.endDate}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate max-w-32" title={leave.reason}>
-                            {leave.reason}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-medium text-blue-600">{leave.days} days</span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                        <Badge className={getLeaveStatusColor(leave.status)}>
-                          {leave.status}
-                        </Badge>
-                          {leave.approver && (
-                            <p className="text-xs text-gray-500">by {leave.approver}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="text-sm text-gray-600">{leave.submittedDate}</p>
-                          {leave.approvalDate && (
-                            <p className="text-xs text-gray-500">
-                              {leave.status === 'Approved' ? 'Approved' : 'Rejected'}: {leave.approvalDate}
+                        </TableCell>
+                        <TableCell className="py-4 max-w-xs">
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {leave.startDate} → {leave.endDate}
                             </p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {(hasPermission('leave.approve') || hasPermission('*')) && leave.status === 'Pending Approval' ? (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreVerticalIcon className="h-4 w-4" />
-                              </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedLeave(leave);
-                                    setShowLeaveApprovalDialog(true);
-                                  }}
-                                  className="text-green-600 focus:text-green-600"
-                                >
-                                  <CheckCircleIcon className="mr-2 h-4 w-4" />
-                                  Review & Approve
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleLeaveApproval(leave.id, 'reject', 'Rejected without review')}
-                                  className="text-red-600 focus:text-red-600"
-                                >
-                                  <XCircleIcon className="mr-2 h-4 w-4" />
-                                  Quick Reject
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <EyeIcon className="mr-2 h-4 w-4" />
-                                  View Details
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          ) : (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                                  <MoreVerticalIcon className="h-4 w-4" />
-                          </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <EyeIcon className="mr-2 h-4 w-4" />
-                                  View Details
-                                </DropdownMenuItem>
-                                {leave.approvalNotes && (
-                                  <DropdownMenuItem>
-                                    <FileTextIcon className="mr-2 h-4 w-4" />
-                                    View Notes
+                            <p className="text-xs text-gray-600 line-clamp-2" title={leave.reason}>
+                              {leave.reason}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4 text-center">
+                          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 border-2 border-blue-100">
+                            <span className="font-bold text-blue-700 text-sm">{leave.days}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4">
+                          <div className="space-y-2">
+                            <Badge className={getLeaveStatusColor(leave.status)}>
+                              {leave.status}
+                            </Badge>
+                            {leave.approver && (
+                              <p className="text-xs text-gray-500">
+                                by {leave.approver}
+                              </p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+                              <p className="text-xs text-gray-600">Submitted: {leave.submittedDate}</p>
+                            </div>
+                            {leave.approvalDate && (
+                              <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${
+                                  leave.status === 'Approved' ? 'bg-green-400' : 'bg-red-400'
+                                }`}></div>
+                                <p className="text-xs text-gray-600">
+                                  {leave.status === 'Approved' ? 'Approved' : 'Rejected'}: {leave.approvalDate}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4">
+                          <div className="flex justify-center">
+                            {(hasPermission('leave.approve') || hasPermission('*')) && leave.status === 'Pending Approval' ? (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-10 w-10 p-0 hover:bg-gray-100 group-hover:bg-gray-200 transition-colors"
+                                  >
+                                    <MoreVerticalIcon className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedLeave(leave);
+                                      setShowLeaveApprovalDialog(true);
+                                    }}
+                                    className="text-green-600 focus:text-green-600 focus:bg-green-50"
+                                  >
+                                    <CheckCircleIcon className="mr-2 h-4 w-4" />
+                                    Review & Approve
                                   </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem>
-                                  <DownloadIcon className="mr-2 h-4 w-4" />
-                                  Download
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                                  <DropdownMenuItem
+                                    onClick={() => handleLeaveApproval(leave.id, 'reject', 'Rejected without review')}
+                                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                  >
+                                    <XCircleIcon className="mr-2 h-4 w-4" />
+                                    Quick Reject
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="focus:bg-blue-50">
+                                    <EyeIcon className="mr-2 h-4 w-4" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            ) : (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-10 w-10 p-0 hover:bg-gray-100 group-hover:bg-gray-200 transition-colors"
+                                  >
+                                    <MoreVerticalIcon className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem className="focus:bg-blue-50">
+                                    <EyeIcon className="mr-2 h-4 w-4" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  {leave.approvalNotes && (
+                                    <DropdownMenuItem className="focus:bg-gray-50">
+                                      <FileTextIcon className="mr-2 h-4 w-4" />
+                                      View Notes
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem className="focus:bg-gray-50">
+                                    <DownloadIcon className="mr-2 h-4 w-4" />
+                                    Download
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {filteredLeaves.length === 0 && (
+                <div className="text-center py-12">
+                  <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No leave requests found</h3>
+                  <p className="text-gray-500 mb-4">No leave requests match your current search criteria.</p>
+                  <Button 
+                    onClick={() => setSearchQuery("")} 
+                    variant="outline"
+                    className="border-gray-200 hover:bg-gray-50"
+                  >
+                    Clear Search
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -74,7 +74,7 @@ const mockUsers: Record<string, { password: string; user: User; loginAttempts: n
       lastLoginAt: new Date(),
       ipAddress: '192.168.1.100',
       securityLevel: 'CRITICAL',
-      permissions: ['recruitment.create', 'recruitment.edit', 'recruitment.view', 'candidates.manage', 'interviews.schedule', 'team.view', 'team.manage', 'leave.approve', 'performance.evaluate', 'training.view', 'training.manage', 'compliance.view', 'payroll.view', 'payroll.manage', 'reports.hr'] // HR Manager specific permissions, no system admin access
+      permissions: ['recruitment.create', 'recruitment.edit', 'recruitment.view', 'candidates.manage', 'interviews.schedule', 'team.view', 'team.manage', 'leave.approve', 'performance.evaluate', 'training.view', 'training.manage', 'payroll.view', 'payroll.manage', 'compliance.view', 'communications.view', 'users.view', 'reports.view'] // HR Manager has extensive HR permissions but NOT system.admin
     }
   },
   'recruiter@horizonbankss.com': {
@@ -91,7 +91,7 @@ const mockUsers: Record<string, { password: string; user: User; loginAttempts: n
       lastLoginAt: new Date(),
       ipAddress: '192.168.1.101',
       securityLevel: 'HIGH',
-      permissions: ['recruitment.create', 'recruitment.edit', 'recruitment.view', 'candidates.manage', 'interviews.schedule']
+      permissions: ['recruitment.create', 'recruitment.edit', 'recruitment.view', 'candidates.manage', 'interviews.schedule', 'communications.view']
     }
   },
   'manager@horizonbankss.com': {
@@ -108,7 +108,7 @@ const mockUsers: Record<string, { password: string; user: User; loginAttempts: n
       lastLoginAt: new Date(),
       ipAddress: '192.168.1.102',
       securityLevel: 'HIGH',
-      permissions: ['team.view', 'team.manage', 'leave.approve', 'performance.evaluate', 'training.view']
+      permissions: ['team.view', 'team.manage', 'leave.approve', 'performance.evaluate', 'training.view', 'communications.view']
     }
   },
   'finance@horizonbankss.com': {
@@ -125,7 +125,7 @@ const mockUsers: Record<string, { password: string; user: User; loginAttempts: n
       lastLoginAt: new Date(),
       ipAddress: '192.168.1.103',
       securityLevel: 'CRITICAL',
-      permissions: ['payroll.manage', 'payroll.view', 'taxes.manage', 'reports.financial', 'compliance.financial']
+      permissions: ['payroll.manage', 'payroll.view', 'taxes.manage', 'reports.financial', 'compliance.financial', 'communications.view']
     }
   },
   'employee@horizonbankss.com': {
@@ -142,7 +142,7 @@ const mockUsers: Record<string, { password: string; user: User; loginAttempts: n
       lastLoginAt: new Date(),
       ipAddress: '192.168.1.104',
       securityLevel: 'MEDIUM',
-      permissions: ['profile.view', 'password.change', 'performance.view', 'certificates.download', 'courses.view', 'courses.resume', 'courses.complete', 'leave.request', 'payslips.view', 'training.view', 'training.enroll']
+      permissions: ['profile.view', 'password.change', 'performance.view', 'certificates.download', 'courses.view', 'courses.resume', 'courses.complete', 'leave.request', 'payslips.view', 'training.view', 'training.enroll', 'communications.view']
     }
   },
   'sysadmin@horizonbankss.com': {
@@ -159,7 +159,7 @@ const mockUsers: Record<string, { password: string; user: User; loginAttempts: n
       lastLoginAt: new Date(),
       ipAddress: '192.168.1.10',
       securityLevel: 'CRITICAL',
-      permissions: ['system.admin', 'users.manage', 'logs.view', 'backup.manage', 'security.configure']
+      permissions: ['system.admin', 'users.manage', 'logs.view', 'backup.manage', 'security.configure', 'communications.view']
     }
   }
 };
@@ -180,6 +180,7 @@ const securitySettings: SecuritySettings = {
 // Module access mapping with granular permissions
 const moduleAccess: Record<string, string[]> = {
   '/': ['*'], // Dashboard accessible to all
+  '/employee-dashboard': ['profile.view', '*'], // Employee dashboard accessible to employees
   '/profile': ['*'], // Profile accessible to all employees
   '/company': ['*'], // Company info accessible to all
   '/recruitment': ['recruitment.view', '*'],
@@ -193,7 +194,10 @@ const moduleAccess: Record<string, string[]> = {
   '/training': ['training.view', '*'],
   '/training/manage': ['training.manage', '*'],
   '/compliance': ['compliance.view', 'compliance.financial', '*'],
-  '/communications': ['*'],
+  '/communications': ['communications.view', '*'],
+  '/certifications': ['*'], // Banking certifications accessible to all
+  '/analytics': ['*'], // Analytics accessible to all
+  '/workflows': ['*'], // Workflows accessible to all
   '/admin': ['system.admin'], // ONLY system administrators
   '/audit': ['system.admin'] // ONLY system administrators
 };
@@ -364,6 +368,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // System Administrator should not have profile access
     if (module === '/profile' && user.role === 'System Administrator') {
       return false;
+    }
+    
+    // These modules should be accessible to all authenticated users
+    if (module === '/' || module === '/communications') {
+      return true;
+    }
+    
+    // Profile is accessible to all except System Administrator (handled above)
+    if (module === '/profile') {
+      return true;
     }
     
     const requiredPermissions = moduleAccess[module] || [];

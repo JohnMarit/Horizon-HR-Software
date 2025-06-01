@@ -29,8 +29,10 @@ import {
   EyeIcon,
   UserIcon,
   CalendarIcon,
-  BriefcaseIcon
+  BriefcaseIcon,
+  LogOutIcon
 } from "lucide-react";
+import ExitManagement from "@/components/ExitManagement";
 
 // Employee interface
 interface Employee {
@@ -59,7 +61,9 @@ export default function EmployeeRecords() {
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [exitingEmployee, setExitingEmployee] = useState<Employee | null>(null);
   const [activeTab, setActiveTab] = useState("basic");
   
   const { user, hasPermission, addAuditLog } = useAuth();
@@ -428,6 +432,17 @@ export default function EmployeeRecords() {
     setEmployees(updatedEmployees);
   };
 
+  const handleExitManagement = (employee: Employee) => {
+    if (!hasPermission('team.manage') && !hasPermission('*')) {
+      addAuditLog('UNAUTHORIZED_ACCESS_ATTEMPT', 'EMPLOYEE_MANAGEMENT', { action: 'exit_management', employeeId: employee.id });
+      return;
+    }
+
+    setExitingEmployee(employee);
+    setShowExitDialog(true);
+    addAuditLog('EMPLOYEE_EXIT_MANAGEMENT_DIALOG_OPENED', 'EMPLOYEE_MANAGEMENT', { action: 'exit_management_form_opened', employeeId: employee.id });
+  };
+
   const filteredEmployees = employees.filter(employee =>
     employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     employee.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -478,16 +493,37 @@ export default function EmployeeRecords() {
                 {(hasPermission('team.manage') || hasPermission('*')) && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <MoreVerticalIcon className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditEmployee(employee)}>
+                    <DropdownMenuContent 
+                      align="end" 
+                      className="w-48 z-[100] border border-gray-200 bg-white shadow-lg rounded-md p-1 animate-none"
+                      side="bottom"
+                      sideOffset={4}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditEmployee(employee);
+                        }}
+                      >
                         <EditIcon className="mr-2 h-4 w-4" />
                         Edit Employee
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleToggleEmployeeStatus(employee.id)}>
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleEmployeeStatus(employee.id);
+                        }}
+                      >
                         {employee.status === 'Active' ? (
                           <>
                             <UserIcon className="mr-2 h-4 w-4" />
@@ -500,6 +536,17 @@ export default function EmployeeRecords() {
                           </>
                         )}
                       </DropdownMenuItem>
+                      {(user?.role === 'HR Manager' || hasPermission('*')) && (
+                        <DropdownMenuItem 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleExitManagement(employee);
+                          }}
+                        >
+                          <LogOutIcon className="mr-2 h-4 w-4" />
+                          Exit Management
+                        </DropdownMenuItem>
+                      )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem 
@@ -510,7 +557,7 @@ export default function EmployeeRecords() {
                             Delete Employee
                           </DropdownMenuItem>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Employee Record</AlertDialogTitle>
                             <AlertDialogDescription>
@@ -518,9 +565,14 @@ export default function EmployeeRecords() {
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel onClick={() => {}}>
+                              Cancel
+                            </AlertDialogCancel>
                             <AlertDialogAction 
-                              onClick={() => handleDeleteEmployee(employee.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteEmployee(employee.id);
+                              }}
                               className="bg-red-600 hover:bg-red-700"
                             >
                               Delete
@@ -577,7 +629,10 @@ export default function EmployeeRecords() {
               variant="outline" 
               size="sm" 
               className="flex-1"
-              onClick={() => handleEditEmployee(employee)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditEmployee(employee);
+              }}
             >
               <EditIcon className="mr-2 h-4 w-4" />
               Edit
@@ -739,19 +794,40 @@ export default function EmployeeRecords() {
                     <TableCell>{employee.location}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        {(hasPermission('team.manage') || hasPermission('*')) ? (
+                        {(hasPermission('team.manage') || hasPermission('*')) && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <MoreVerticalIcon className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditEmployee(employee)}>
+                            <DropdownMenuContent 
+                              align="end" 
+                              className="w-48 z-[100] border border-gray-200 bg-white shadow-lg rounded-md p-1 animate-none"
+                              side="bottom"
+                              sideOffset={4}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditEmployee(employee);
+                                }}
+                              >
                                 <EditIcon className="mr-2 h-4 w-4" />
                                 Edit Employee
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleEmployeeStatus(employee.id)}>
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleEmployeeStatus(employee.id);
+                                }}
+                              >
                                 {employee.status === 'Active' ? (
                                   <>
                                     <UserIcon className="mr-2 h-4 w-4" />
@@ -764,6 +840,17 @@ export default function EmployeeRecords() {
                                   </>
                                 )}
                               </DropdownMenuItem>
+                              {(user?.role === 'HR Manager' || hasPermission('*')) && (
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleExitManagement(employee);
+                                  }}
+                                >
+                                  <LogOutIcon className="mr-2 h-4 w-4" />
+                                  Exit Management
+                                </DropdownMenuItem>
+                              )}
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <DropdownMenuItem 
@@ -774,7 +861,7 @@ export default function EmployeeRecords() {
                                     Delete Employee
                                   </DropdownMenuItem>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent>
+                                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Delete Employee Record</AlertDialogTitle>
                                     <AlertDialogDescription>
@@ -782,9 +869,14 @@ export default function EmployeeRecords() {
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogCancel onClick={() => {}}>
+                                      Cancel
+                                    </AlertDialogCancel>
                                     <AlertDialogAction 
-                                      onClick={() => handleDeleteEmployee(employee.id)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteEmployee(employee.id);
+                                      }}
                                       className="bg-red-600 hover:bg-red-700"
                                     >
                                       Delete
@@ -794,10 +886,6 @@ export default function EmployeeRecords() {
                               </AlertDialog>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        ) : (
-                          <Button variant="ghost" size="sm">
-                            <EyeIcon className="h-4 w-4" />
-                          </Button>
                         )}
                       </div>
                     </TableCell>
@@ -1272,6 +1360,45 @@ export default function EmployeeRecords() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Exit Management Dialog */}
+      <Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Exit Management</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to exit management of {exitingEmployee?.name}? This action cannot be undone and will remove all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DialogFooter className="mt-6">
+            <Button variant="outline" onClick={() => setShowExitDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowExitDialog(false);
+                handleDeleteEmployee(exitingEmployee?.id || 0);
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Exit Management
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Exit Management Component */}
+      {exitingEmployee && (
+        <ExitManagement
+          employee={exitingEmployee}
+          isOpen={showExitDialog}
+          onClose={() => {
+            setShowExitDialog(false);
+            setExitingEmployee(null);
+          }}
+        />
+      )}
     </div>
   );
 }

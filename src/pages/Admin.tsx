@@ -122,7 +122,7 @@ export default function Admin() {
       status: "Active",
       lastLogin: "2025-01-20 14:30:00",
       is2FAEnabled: false,
-      permissions: ["*"],
+      permissions: ["recruitment.create", "recruitment.edit", "recruitment.view", "candidates.manage", "interviews.schedule", "team.view", "team.manage", "leave.approve", "performance.evaluate", "training.view", "training.manage", "payroll.view", "payroll.manage", "compliance.view", "communications.view", "users.view", "reports.view"],
       securityLevel: "CRITICAL",
       avatar: "/placeholder-avatar.png"
     },
@@ -172,7 +172,7 @@ export default function Admin() {
 
   // Permission templates based on roles
   const rolePermissions = {
-    "HR Manager": ["*"],
+    "HR Manager": ["recruitment.create", "recruitment.edit", "recruitment.view", "candidates.manage", "interviews.schedule", "team.view", "team.manage", "leave.approve", "performance.evaluate", "training.view", "training.manage", "payroll.view", "payroll.manage", "compliance.view", "communications.view", "users.view", "reports.view"],
     "Recruiter": ["recruitment.create", "recruitment.edit", "recruitment.view", "candidates.manage", "interviews.schedule"],
     "Department Head": ["team.view", "team.manage", "leave.approve", "performance.evaluate", "training.view"],
     "Finance Officer": ["payroll.manage", "payroll.view", "taxes.manage", "reports.financial", "compliance.financial"]
@@ -546,18 +546,18 @@ Horizon Bank IT Department
             {filteredUsers.map((adminUser) => (
               <Card key={adminUser.id} className="border">
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <Avatar className="h-12 w-12">
+                  <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                    <div className="flex items-start gap-4 flex-1 min-w-0">
+                      <Avatar className="h-12 w-12 shrink-0">
                         <AvatarImage src={adminUser.avatar} />
                         <AvatarFallback className="bg-blue-100 text-blue-700">
                           {adminUser.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
                       
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-gray-900">{adminUser.name}</h3>
+                      <div className="flex-1 space-y-2 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold text-gray-900 truncate">{adminUser.name}</h3>
                           <Badge className={getStatusColor(adminUser.status)}>
                             {adminUser.status}
                           </Badge>
@@ -565,28 +565,28 @@ Horizon Bank IT Department
                             {adminUser.securityLevel}
                           </Badge>
                           {adminUser.is2FAEnabled && (
-                            <ShieldCheckIcon className="h-4 w-4 text-green-600" />
+                            <ShieldCheckIcon className="h-4 w-4 text-green-600 shrink-0" />
                           )}
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-2">
-                            <MailIcon className="h-4 w-4" />
-                            <span>{adminUser.email}</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <MailIcon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{adminUser.email}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Building2Icon className="h-4 w-4" />
-                            <span>{adminUser.role} • {adminUser.department}</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Building2Icon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">{adminUser.role} • {adminUser.department}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <CalendarIcon className="h-4 w-4" />
-                            <span>Last login: {adminUser.lastLogin}</span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CalendarIcon className="h-4 w-4 shrink-0" />
+                            <span className="truncate">Last login: {adminUser.lastLogin}</span>
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500">Permissions:</span>
-                          <div className="flex gap-1 flex-wrap">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs text-gray-500 shrink-0">Permissions:</span>
+                          <div className="flex gap-1 flex-wrap min-w-0">
                             {adminUser.permissions.slice(0, 3).map((permission, index) => (
                               <Badge key={index} variant="outline" className="text-xs">
                                 {permission === '*' ? 'Full Access' : permission}
@@ -602,21 +602,24 @@ Horizon Bank IT Department
                       </div>
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 shrink-0 lg:flex-col lg:w-auto">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditUser(adminUser)}
+                        className="flex-1 lg:flex-none lg:w-full min-w-[80px]"
                       >
-                        <EditIcon className="h-4 w-4" />
+                        <EditIcon className="h-4 w-4 lg:mr-2" />
+                        <span className="hidden lg:inline">Edit</span>
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleDeleteUser(adminUser)}
-                        className="text-red-600 hover:text-red-700"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-1 lg:flex-none lg:w-full min-w-[80px]"
                       >
-                        <TrashIcon className="h-4 w-4" />
+                        <TrashIcon className="h-4 w-4 lg:mr-2" />
+                        <span className="hidden lg:inline">Delete</span>
                       </Button>
                     </div>
                   </div>

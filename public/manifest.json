@@ -1,0 +1,83 @@
+{
+  "name": "Horizon Bank HR Management System",
+  "short_name": "Horizon Bank HR",
+  "description": "Professional HR management system for Horizon Bank South Sudan",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#475569",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity"],
+  "lang": "en",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/src/img/horizon-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/src/img/horizon-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "type": "image/png",
+      "sizes": "375x812",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "type": "image/png",
+      "sizes": "1280x720",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View HR dashboard",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/src/img/horizon-logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Leave Request",
+      "short_name": "Leave",
+      "description": "Request time off",
+      "url": "/payroll",
+      "icons": [
+        {
+          "src": "/src/img/horizon-logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Certifications",
+      "short_name": "Certs",
+      "description": "Banking certifications",
+      "url": "/certifications",
+      "icons": [
+        {
+          "src": "/src/img/horizon-logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+} 

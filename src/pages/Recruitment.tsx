@@ -703,148 +703,304 @@ export default function Recruitment() {
 
       {/* Create Job Dialog */}
       <Dialog open={showCreateJobDialog} onOpenChange={setShowCreateJobDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Post New Job Opening</DialogTitle>
-            <DialogDescription>
-              Create a new job posting for Horizon Bank. Fill in all required details.
-            </DialogDescription>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader className="pb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700">
+                <BriefcaseIcon className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl">Post New Job Opening</DialogTitle>
+                <DialogDescription className="text-base mt-1">
+                  Create a comprehensive job posting to attract top banking talent
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
           
-          <div className="grid gap-6 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Job Title *</Label>
-                <Input
-                  id="title"
-                  value={jobForm.title}
-                  onChange={(e) => setJobForm({ ...jobForm, title: e.target.value })}
-                  placeholder="e.g. Senior Credit Analyst"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="department">Department *</Label>
-                <Select 
-                  value={jobForm.department} 
-                  onValueChange={(value) => setJobForm({ ...jobForm, department: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Corporate Banking">Corporate Banking</SelectItem>
-                    <SelectItem value="Personal Banking">Personal Banking</SelectItem>
-                    <SelectItem value="Trade Finance">Trade Finance</SelectItem>
-                    <SelectItem value="Information Technology">Information Technology</SelectItem>
-                    <SelectItem value="Human Resources">Human Resources</SelectItem>
-                    <SelectItem value="Finance & Accounting">Finance & Accounting</SelectItem>
-                    <SelectItem value="Risk Management">Risk Management</SelectItem>
-                    <SelectItem value="Operations">Operations</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+          <div className="overflow-y-auto max-h-[calc(90vh-12rem)] pr-2">
+            <div className="space-y-8">
+              {/* Basic Information Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                  <FileTextIcon className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="text-sm font-medium flex items-center gap-1">
+                      Job Title <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="title"
+                      value={jobForm.title}
+                      onChange={(e) => setJobForm({ ...jobForm, title: e.target.value })}
+                      placeholder="e.g. Senior Credit Risk Analyst"
+                      className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    {!jobForm.title && (
+                      <p className="text-xs text-gray-500">Enter a clear and specific job title</p>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="department" className="text-sm font-medium flex items-center gap-1">
+                      Department <span className="text-red-500">*</span>
+                    </Label>
+                    <Select 
+                      value={jobForm.department} 
+                      onValueChange={(value) => setJobForm({ ...jobForm, department: value })}
+                    >
+                      <SelectTrigger className="h-11 border-gray-300 focus:border-blue-500">
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Corporate Banking">
+                          <div className="flex items-center gap-2">
+                            <BriefcaseIcon className="h-4 w-4" />
+                            Corporate Banking
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Personal Banking">
+                          <div className="flex items-center gap-2">
+                            <UsersIcon className="h-4 w-4" />
+                            Personal Banking
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Trade Finance">
+                          <div className="flex items-center gap-2">
+                            <CreditCardIcon className="h-4 w-4" />
+                            Trade Finance
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Information Technology">
+                          <div className="flex items-center gap-2">
+                            <FileTextIcon className="h-4 w-4" />
+                            Information Technology
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Human Resources">
+                          <div className="flex items-center gap-2">
+                            <UsersIcon className="h-4 w-4" />
+                            Human Resources
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Finance & Accounting">
+                          <div className="flex items-center gap-2">
+                            <DollarSignIcon className="h-4 w-4" />
+                            Finance & Accounting
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Risk Management">
+                          <div className="flex items-center gap-2">
+                            <StarIcon className="h-4 w-4" />
+                            Risk Management
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Operations">
+                          <div className="flex items-center gap-2">
+                            <CheckCircleIcon className="h-4 w-4" />
+                            Operations
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="type">Employment Type *</Label>
-                <Select 
-                  value={jobForm.type} 
-                  onValueChange={(value) => setJobForm({ ...jobForm, type: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Full-time">Full-time</SelectItem>
-                    <SelectItem value="Part-time">Part-time</SelectItem>
-                    <SelectItem value="Contract">Contract</SelectItem>
-                    <SelectItem value="Temporary">Temporary</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="type" className="text-sm font-medium flex items-center gap-1">
+                      Employment Type <span className="text-red-500">*</span>
+                    </Label>
+                    <Select 
+                      value={jobForm.type} 
+                      onValueChange={(value) => setJobForm({ ...jobForm, type: value })}
+                    >
+                      <SelectTrigger className="h-11 border-gray-300 focus:border-blue-500">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Full-time">Full-time</SelectItem>
+                        <SelectItem value="Part-time">Part-time</SelectItem>
+                        <SelectItem value="Contract">Contract</SelectItem>
+                        <SelectItem value="Temporary">Temporary</SelectItem>
+                        <SelectItem value="Internship">Internship</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="level" className="text-sm font-medium flex items-center gap-1">
+                      Experience Level <span className="text-red-500">*</span>
+                    </Label>
+                    <Select 
+                      value={jobForm.level} 
+                      onValueChange={(value) => setJobForm({ ...jobForm, level: value })}
+                    >
+                      <SelectTrigger className="h-11 border-gray-300 focus:border-blue-500">
+                        <SelectValue placeholder="Select level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Entry-level">Entry-level (0-2 years)</SelectItem>
+                        <SelectItem value="Mid-level">Mid-level (3-5 years)</SelectItem>
+                        <SelectItem value="Senior">Senior (6-10 years)</SelectItem>
+                        <SelectItem value="Executive">Executive (10+ years)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="location" className="text-sm font-medium flex items-center gap-1">
+                      Location <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="location"
+                      value={jobForm.location}
+                      onChange={(e) => setJobForm({ ...jobForm, location: e.target.value })}
+                      placeholder="e.g. Juba, South Sudan"
+                      className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="level">Experience Level *</Label>
-                <Select 
-                  value={jobForm.level} 
-                  onValueChange={(value) => setJobForm({ ...jobForm, level: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Entry-level">Entry-level</SelectItem>
-                    <SelectItem value="Mid-level">Mid-level</SelectItem>
-                    <SelectItem value="Senior">Senior</SelectItem>
-                    <SelectItem value="Executive">Executive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="location">Location *</Label>
-                <Input
-                  id="location"
-                  value={jobForm.location}
-                  onChange={(e) => setJobForm({ ...jobForm, location: e.target.value })}
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="salary">Salary Range</Label>
-                <Input
-                  id="salary"
-                  value={jobForm.salary}
-                  onChange={(e) => setJobForm({ ...jobForm, salary: e.target.value })}
-                  placeholder="e.g. $3,000 - $4,000"
-                />
+              {/* Compensation & Timeline Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                  <DollarSignIcon className="h-5 w-5 text-green-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Compensation & Timeline</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="salary" className="text-sm font-medium">
+                      Salary Range
+                    </Label>
+                    <Input
+                      id="salary"
+                      value={jobForm.salary}
+                      onChange={(e) => setJobForm({ ...jobForm, salary: e.target.value })}
+                      placeholder="e.g. $3,000 - $4,500 USD"
+                      className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-gray-500">Include currency and any additional benefits</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="deadline" className="text-sm font-medium flex items-center gap-1">
+                      Application Deadline <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="deadline"
+                      type="date"
+                      value={jobForm.deadline}
+                      onChange={(e) => setJobForm({ ...jobForm, deadline: e.target.value })}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <p className="text-xs text-gray-500">Applications will close on this date</p>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="deadline">Application Deadline *</Label>
-                <Input
-                  id="deadline"
-                  type="date"
-                  value={jobForm.deadline}
-                  onChange={(e) => setJobForm({ ...jobForm, deadline: e.target.value })}
-                />
+
+              {/* Job Description Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                  <FileTextIcon className="h-5 w-5 text-purple-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Job Description</h3>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-sm font-medium flex items-center gap-1">
+                    Job Description <span className="text-red-500">*</span>
+                  </Label>
+                  <Textarea
+                    id="description"
+                    value={jobForm.description}
+                    onChange={(e) => setJobForm({ ...jobForm, description: e.target.value })}
+                    placeholder="Provide a detailed description of the role, key responsibilities, day-to-day activities, and what success looks like in this position..."
+                    rows={5}
+                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Be specific about daily responsibilities and impact</span>
+                    <span>{jobForm.description.length}/2000 characters</span>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Job Description *</Label>
-              <Textarea
-                id="description"
-                value={jobForm.description}
-                onChange={(e) => setJobForm({ ...jobForm, description: e.target.value })}
-                placeholder="Describe the role, responsibilities, and what the candidate will be doing..."
-                rows={4}
-              />
-            </div>
+              {/* Requirements Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                  <CheckCircleIcon className="h-5 w-5 text-orange-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Requirements & Qualifications</h3>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="requirements" className="text-sm font-medium flex items-center gap-1">
+                    Requirements & Qualifications <span className="text-red-500">*</span>
+                  </Label>
+                  <Textarea
+                    id="requirements"
+                    value={jobForm.requirements}
+                    onChange={(e) => setJobForm({ ...jobForm, requirements: e.target.value })}
+                    placeholder="• Bachelor's degree in Finance, Economics, or related field&#10;• 3+ years of experience in banking or financial services&#10;• Strong analytical and problem-solving skills&#10;• Proficiency in financial modeling and risk assessment&#10;• Excellent communication and presentation skills&#10;• Banking certifications preferred"
+                    rows={6}
+                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 resize-none font-mono text-sm"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Use bullet points for better readability</span>
+                    <span>{jobForm.requirements.length}/1500 characters</span>
+                  </div>
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="requirements">Requirements & Qualifications *</Label>
-              <Textarea
-                id="requirements"
-                value={jobForm.requirements}
-                onChange={(e) => setJobForm({ ...jobForm, requirements: e.target.value })}
-                placeholder="List education, experience, skills, and other requirements..."
-                rows={3}
-              />
+              {/* Additional Options */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                  <StarIcon className="h-5 w-5 text-amber-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Additional Information</h3>
+                </div>
+                
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <div className="p-1 rounded bg-blue-100">
+                      <CheckCircleIcon className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-blue-900 mb-1">Job Posting Preview</h4>
+                      <p className="text-sm text-blue-800">
+                        Your job posting will be reviewed and published within 24 hours. 
+                        You'll receive an email confirmation once it's live.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateJobDialog(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSaveJob}
-              disabled={!jobForm.title || !jobForm.department || !jobForm.level || !jobForm.description || !jobForm.requirements || !jobForm.deadline}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-            >
-              Post Job
-            </Button>
+          <DialogFooter className="pt-6 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowCreateJobDialog(false)}
+                className="sm:order-1"
+              >
+                <XCircleIcon className="mr-2 h-4 w-4" />
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSaveJob}
+                disabled={!jobForm.title || !jobForm.department || !jobForm.level || !jobForm.description || !jobForm.requirements || !jobForm.deadline}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 sm:order-2"
+              >
+                <CheckCircleIcon className="mr-2 h-4 w-4" />
+                Post Job Opening
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
