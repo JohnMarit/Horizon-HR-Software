@@ -12,7 +12,12 @@ import {
   TrendingUpIcon,
   ZapIcon,
   CalendarIcon,
-  BriefcaseIcon
+  BriefcaseIcon,
+  StarIcon,
+  HeartIcon,
+  FolderIcon,
+  PieChartIcon,
+  AwardIcon
 } from "lucide-react";
 import Index from "./pages/Index";
 import Recruitment from "./pages/Recruitment";
@@ -29,6 +34,11 @@ import Analytics from "./pages/Analytics";
 import Workflows from "./pages/Workflows";
 import LeaveManagement from "./pages/LeaveManagement";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
+import FeedbackSystem360 from "./components/360FeedbackSystem";
+import EmployeeEngagement from "./components/EmployeeEngagement";
+import LeaveCalendar from "./components/LeaveCalendar";
+import DocumentManagement from "./components/DocumentManagement";
+import HRAnalyticsDashboard from "./components/HRAnalyticsDashboard";
 
 export const navItems = [
   {
@@ -56,10 +66,34 @@ export const navItems = [
     page: <EmployeeRecords />,
   },
   {
+    title: "360° Feedback",
+    to: "/360-feedback",
+    icon: <StarIcon className="h-4 w-4" />,
+    page: <FeedbackSystem360 />,
+  },
+  {
+    title: "Employee Engagement",
+    to: "/engagement",
+    icon: <HeartIcon className="h-4 w-4" />,
+    page: <EmployeeEngagement />,
+  },
+  {
     title: "Leave Management",
     to: "/leave",
     icon: <CalendarIcon className="h-4 w-4" />,
     page: <LeaveManagement />,
+  },
+  {
+    title: "Leave Calendar",
+    to: "/leave-calendar",
+    icon: <CalendarIcon className="h-4 w-4" />,
+    page: <LeaveCalendar />,
+  },
+  {
+    title: "Document Management",
+    to: "/documents",
+    icon: <FolderIcon className="h-4 w-4" />,
+    page: <DocumentManagement />,
   },
   {
     title: "Payroll & Leave",
@@ -90,6 +124,12 @@ export const navItems = [
     to: "/analytics",
     icon: <TrendingUpIcon className="h-4 w-4" />,
     page: <Analytics />,
+  },
+  {
+    title: "HR Analytics",
+    to: "/hr-analytics",
+    icon: <PieChartIcon className="h-4 w-4" />,
+    page: <HRAnalyticsDashboard />,
   },
   {
     title: "Workflow Automation",

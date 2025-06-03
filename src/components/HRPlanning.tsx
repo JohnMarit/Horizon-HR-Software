@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -38,44 +37,56 @@ const HRPlanning = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-4 lg:grid-cols-8 gap-2 h-auto p-2 bg-white shadow-sm">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2 p-3">
-              <FileText className="h-4 w-4" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="employees" className="flex items-center gap-2 p-3">
-              <Users className="h-4 w-4" />
-              Employees
-            </TabsTrigger>
-            <TabsTrigger value="departments" className="flex items-center gap-2 p-3">
-              <Building className="h-4 w-4" />
-              Departments
-            </TabsTrigger>
-            <TabsTrigger value="recruitment" className="flex items-center gap-2 p-3">
-              <UserPlus className="h-4 w-4" />
-              Recruitment
-            </TabsTrigger>
-            <TabsTrigger value="leave" className="flex items-center gap-2 p-3">
-              <Calendar className="h-4 w-4" />
-              Leave
-            </TabsTrigger>
-            <TabsTrigger value="payroll" className="flex items-center gap-2 p-3">
-              <DollarSign className="h-4 w-4" />
-              Payroll
-            </TabsTrigger>
-            <TabsTrigger value="performance" className="flex items-center gap-2 p-3">
-              <FileText className="h-4 w-4" />
-              Performance
-            </TabsTrigger>
-            <TabsTrigger value="training" className="flex items-center gap-2 p-3">
-              <BookOpen className="h-4 w-4" />
-              Training
-            </TabsTrigger>
-            <TabsTrigger value="announcements" className="flex items-center gap-2 p-3">
-              <Bell className="h-4 w-4" />
-              Announcements
-            </TabsTrigger>
-          </TabsList>
+          <div className="relative">
+            <TabsList className="inline-flex h-auto items-center justify-start gap-2 rounded-md bg-white p-2 shadow-sm w-full overflow-x-auto scrollbar-hide">
+              <TabsTrigger value="dashboard" className="flex items-center gap-2 min-w-fit px-3 py-3 text-sm whitespace-nowrap">
+                <FileText className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Dashboard</span>
+              </TabsTrigger>
+              <TabsTrigger value="employees" className="flex items-center gap-2 min-w-fit px-3 py-3 text-sm whitespace-nowrap">
+                <Users className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Employees</span>
+              </TabsTrigger>
+              <TabsTrigger value="departments" className="flex items-center gap-2 min-w-fit px-3 py-3 text-sm whitespace-nowrap">
+                <Building className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Departments</span>
+              </TabsTrigger>
+              <TabsTrigger value="recruitment" className="flex items-center gap-2 min-w-fit px-3 py-3 text-sm whitespace-nowrap">
+                <UserPlus className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Recruitment</span>
+              </TabsTrigger>
+              <TabsTrigger value="leave" className="flex items-center gap-2 min-w-fit px-3 py-3 text-sm whitespace-nowrap">
+                <Calendar className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Leave</span>
+              </TabsTrigger>
+              <TabsTrigger value="payroll" className="flex items-center gap-2 min-w-fit px-3 py-3 text-sm whitespace-nowrap">
+                <DollarSign className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Payroll</span>
+              </TabsTrigger>
+              <TabsTrigger value="performance" className="flex items-center gap-2 min-w-fit px-3 py-3 text-sm whitespace-nowrap">
+                <FileText className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Performance</span>
+              </TabsTrigger>
+              <TabsTrigger value="training" className="flex items-center gap-2 min-w-fit px-3 py-3 text-sm whitespace-nowrap">
+                <BookOpen className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Training</span>
+              </TabsTrigger>
+              <TabsTrigger value="announcements" className="flex items-center gap-2 min-w-fit px-3 py-3 text-sm whitespace-nowrap">
+                <Bell className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Announcements</span>
+              </TabsTrigger>
+            </TabsList>
+            
+            {/* Mobile: Add swipe indicator */}
+            <div className="flex sm:hidden justify-center mt-2">
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <span>Swipe</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </div>
 
           <TabsContent value="dashboard" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

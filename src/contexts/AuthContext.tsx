@@ -54,6 +54,7 @@ export interface AuthContextType {
   isImpersonating: boolean;
   originalUser: User | null;
   stopImpersonation: () => void;
+  updateAvatar: (newAvatarUrl: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -442,6 +443,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateAvatar = (newAvatarUrl: string) => {
+    if (user) {
+      const updatedUser = { ...user, avatar: newAvatarUrl };
+      setUser(updatedUser);
+      localStorage.setItem('horizon_hr_user_secure', JSON.stringify(updatedUser));
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -458,7 +467,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       impersonateUser,
       isImpersonating,
       originalUser,
-      stopImpersonation
+      stopImpersonation,
+      updateAvatar
     }}>
       {children}
     </AuthContext.Provider>

@@ -440,13 +440,35 @@ const LeaveManagement = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="requests">Requests</TabsTrigger>
-          <TabsTrigger value="balances">Balances</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
+        <div className="relative">
+          <TabsList className="inline-flex h-12 items-center justify-start gap-1 rounded-md bg-muted p-1 text-muted-foreground w-full overflow-x-auto scrollbar-hide">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
+              <span>Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="requests" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
+              <span>Requests</span>
+            </TabsTrigger>
+            <TabsTrigger value="balances" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
+              <span>Balances</span>
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
+              <span>Reports</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
+              <span>Settings</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* Mobile: Add swipe indicator */}
+          <div className="flex sm:hidden justify-center mt-2">
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <span>Swipe</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </div>
 
         <TabsContent value="dashboard" className="space-y-6">
           {/* Dashboard Statistics */}

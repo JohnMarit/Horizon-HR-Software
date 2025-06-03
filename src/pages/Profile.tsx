@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
   CalendarIcon,
@@ -94,7 +95,7 @@ interface TeamMember {
 }
 
 export default function Profile() {
-  const { user, hasPermission } = useAuth();
+  const { user, hasPermission, updateAvatar } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -533,12 +534,12 @@ export default function Profile() {
       <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-50 to-purple-50">
         <CardContent className="p-8">
           <div className="flex flex-col md:flex-row items-start gap-6">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={employeeProfile.avatar} />
-              <AvatarFallback className="bg-blue-100 text-blue-700 text-2xl">
-                {employeeProfile.name.split(' ').map(n => n[0]).join('')}
-              </AvatarFallback>
-            </Avatar>
+            <AvatarUpload
+              currentAvatar={employeeProfile.avatar}
+              userId={user.id}
+              userName={employeeProfile.name}
+              onAvatarUpdate={updateAvatar}
+            />
             
             <div className="flex-1 space-y-4">
               <div>
@@ -582,36 +583,48 @@ export default function Profile() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <TargetIcon className="h-4 w-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="learning" className="flex items-center gap-2">
-            <BookOpenIcon className="h-4 w-4" />
-            My Learning
-          </TabsTrigger>
-          <TabsTrigger value="team" className="flex items-center gap-2">
-            <UsersIcon className="h-4 w-4" />
-            Team Learning
-          </TabsTrigger>
-          <TabsTrigger value="performance" className="flex items-center gap-2">
-            <TrendingUpIcon className="h-4 w-4" />
-            Performance
-          </TabsTrigger>
-          <TabsTrigger value="certificates" className="flex items-center gap-2">
-            <AwardIcon className="h-4 w-4" />
-            Certificates
-          </TabsTrigger>
-          <TabsTrigger value="personal" className="flex items-center gap-2">
-            <UserIcon className="h-4 w-4" />
-            Personal Info
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <ShieldIcon className="h-4 w-4" />
-            Security
-          </TabsTrigger>
-        </TabsList>
+        <div className="relative">
+          <TabsList className="inline-flex h-12 items-center justify-start gap-1 rounded-md bg-muted p-1 text-muted-foreground w-full overflow-x-auto scrollbar-hide">
+            <TabsTrigger value="overview" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
+              <TargetIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="learning" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
+              <BookOpenIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">My Learning</span>
+            </TabsTrigger>
+            <TabsTrigger value="team" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
+              <UsersIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Team Learning</span>
+            </TabsTrigger>
+            <TabsTrigger value="performance" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
+              <TrendingUpIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Performance</span>
+            </TabsTrigger>
+            <TabsTrigger value="certificates" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
+              <AwardIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Certificates</span>
+            </TabsTrigger>
+            <TabsTrigger value="personal" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
+              <UserIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Personal Info</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
+              <ShieldIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Security</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* Mobile: Add swipe indicator */}
+          <div className="flex sm:hidden justify-center mt-2">
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <span>Swipe</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
