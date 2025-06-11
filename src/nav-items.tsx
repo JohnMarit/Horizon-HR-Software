@@ -17,7 +17,10 @@ import {
   HeartIcon,
   FolderIcon,
   PieChartIcon,
-  AwardIcon
+  AwardIcon,
+  ClockIcon,
+  ShieldIcon,
+  GavelIcon
 } from "lucide-react";
 import Index from "./pages/Index";
 import Recruitment from "./pages/Recruitment";
@@ -39,6 +42,11 @@ import EmployeeEngagement from "./components/EmployeeEngagement";
 import LeaveCalendar from "./components/LeaveCalendar";
 import DocumentManagement from "./components/DocumentManagement";
 import HRAnalyticsDashboard from "./components/HRAnalyticsDashboard";
+import TimeAttendance from "./components/TimeAttendance";
+import BenefitsManagement from "./components/BenefitsManagement";
+import DisciplinaryManagement from "./components/DisciplinaryManagement";
+import TrainingDevelopment from "./pages/TrainingDevelopment";
+import TestBenefits from "./pages/TestBenefits";
 
 export const navItems = [
   {
@@ -52,6 +60,30 @@ export const navItems = [
     to: "/admin",
     icon: <SettingsIcon className="h-4 w-4" />,
     page: <Admin />,
+  },
+  {
+    title: "🔧 TEST Benefits",
+    to: "/test-benefits",
+    icon: <ShieldIcon className="h-4 w-4" />,
+    page: <TestBenefits />,
+  },
+  {
+    title: "Time & Attendance",
+    to: "/time-attendance",
+    icon: <ClockIcon className="h-4 w-4" />,
+    page: <TimeAttendance />,
+  },
+  {
+    title: "Leave & Attendance",
+    to: "/leave-attendance",
+    icon: <CalendarIcon className="h-4 w-4" />,
+    page: <LeaveManagement />,
+  },
+  {
+    title: "Disciplinary & Grievance",
+    to: "/disciplinary",
+    icon: <GavelIcon className="h-4 w-4" />,
+    page: <DisciplinaryManagement />,
   },
   {
     title: "Recruitment",
@@ -96,7 +128,7 @@ export const navItems = [
     page: <DocumentManagement />,
   },
   {
-    title: "Payroll & Leave",
+    title: "Payroll & Tax",
     to: "/payroll",
     icon: <DollarSignIcon className="h-4 w-4" />,
     page: <Payroll />,
@@ -112,6 +144,12 @@ export const navItems = [
     to: "/training",
     icon: <BookOpenIcon className="h-4 w-4" />,
     page: <Training />,
+  },
+  {
+    title: "Training & Development",
+    to: "/training-development",
+    icon: <AwardIcon className="h-4 w-4" />,
+    page: <TrainingDevelopment />,
   },
   {
     title: "Banking Certifications",
@@ -148,6 +186,12 @@ export const navItems = [
     to: "/communications",
     icon: <MessageSquareIcon className="h-4 w-4" />,
     page: <Communications />,
+  },
+  {
+    title: "Benefits Management",
+    to: "/benefits",
+    icon: <ShieldIcon className="h-4 w-4" />,
+    page: <BenefitsManagement />,
   },
   {
     title: "My Profile",

@@ -33,6 +33,7 @@ import {
   LogOutIcon
 } from "lucide-react";
 import ExitManagement from "@/components/ExitManagement";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Employee interface
 interface Employee {
@@ -54,6 +55,120 @@ interface Employee {
   birthDate?: string;
   education?: string;
   manager?: string;
+}
+
+// Comprehensive Employee interface matching Payroll.tsx
+interface ComprehensiveEmployee {
+  id: string;
+  // Personal Information
+  personalInfo: {
+    firstName: string;
+    lastName: string;
+    fullName: string;
+    gender: 'Male' | 'Female' | 'Other' | 'Prefer not to say';
+    nationality: string;
+    dateOfBirth: string;
+    maritalStatus: 'Single' | 'Married' | 'Divorced' | 'Widowed' | 'Other';
+    religion?: string;
+  };
+  // Identity Documents
+  identityInfo: {
+    nationalId?: string;
+    passportNumber?: string;
+    workPermitNumber?: string;
+    immigrationStatus: 'National' | 'Work Permit' | 'Resident' | 'Temporary Visa' | 'Other';
+    workPermitExpiry?: string;
+    visaExpiry?: string;
+  };
+  // Employment Details
+  employmentInfo: {
+    employeeId: string;
+    contractType: 'Permanent' | 'Temporary' | 'Probationary' | 'Contract' | 'Internship';
+    jobTitle: string;
+    jobDescription: string;
+    department: string;
+    directSupervisor?: string;
+    workLocation: string;
+    employmentStartDate: string;
+    probationEndDate?: string;
+    contractEndDate?: string;
+    terminationDate?: string;
+    terminationReason?: string;
+    employmentStatus: 'Active' | 'On Leave' | 'Suspended' | 'Terminated' | 'Resigned';
+  };
+  // Compensation & Benefits
+  compensationInfo: {
+    salaryStructure: {
+      baseSalary: number;
+      currency: string;
+      payFrequency: 'Monthly' | 'Bi-weekly' | 'Weekly';
+      allowances: {
+        transport: number;
+        medical: number;
+        housing: number;
+        meal: number;
+        communication: number;
+        other: number;
+      };
+    };
+    benefits: {
+      medicalInsurance: boolean;
+      lifeInsurance: boolean;
+      pensionScheme: boolean;
+      annualLeave: number;
+      sickLeave: number;
+      maternityLeave: number;
+      paternityLeave: number;
+    };
+    taxInfo: {
+      taxId?: string;
+      taxExemptions: number;
+      socialSecurityNumber?: string;
+    };
+  };
+  // Banking & Payment
+  bankingInfo: {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+    bankBranch?: string;
+    swiftCode?: string;
+    paymentMethod: 'Bank Transfer' | 'Cash' | 'Check' | 'Mobile Money';
+    mobileMoneyNumber?: string;
+  };
+  // Contact Information
+  contactInfo: {
+    personalEmail?: string;
+    workEmail: string;
+    personalPhone: string;
+    workPhone?: string;
+    address: {
+      street: string;
+      city: string;
+      state: string;
+      postalCode?: string;
+      country: string;
+    };
+    emergencyContacts: EmergencyContact[];
+  };
+  // System Info
+  systemInfo: {
+    createdBy: string;
+    createdDate: string;
+    lastUpdatedBy?: string;
+    lastUpdatedDate?: string;
+    profileCompletionPercentage: number;
+  };
+}
+
+interface EmergencyContact {
+  id: string;
+  name: string;
+  relationship: string;
+  phone: string;
+  email?: string;
+  address?: string;
+  isPrimary: boolean;
 }
 
 export default function EmployeeRecords() {
@@ -85,6 +200,103 @@ export default function EmployeeRecords() {
     birthDate: "",
     education: "",
     manager: ""
+  });
+
+  // Comprehensive Employee Form State
+  const [employeeFormStep, setEmployeeFormStep] = useState(1);
+  const [comprehensiveEmployeeForm, setComprehensiveEmployeeForm] = useState<Partial<ComprehensiveEmployee>>({
+    personalInfo: {
+      firstName: '',
+      lastName: '',
+      fullName: '',
+      gender: 'Male',
+      nationality: '',
+      dateOfBirth: '',
+      maritalStatus: 'Single',
+      religion: ''
+    },
+    identityInfo: {
+      nationalId: '',
+      passportNumber: '',
+      workPermitNumber: '',
+      immigrationStatus: 'National',
+      workPermitExpiry: '',
+      visaExpiry: ''
+    },
+    employmentInfo: {
+      employeeId: '',
+      contractType: 'Permanent',
+      jobTitle: '',
+      jobDescription: '',
+      department: '',
+      directSupervisor: '',
+      workLocation: '',
+      employmentStartDate: '',
+      probationEndDate: '',
+      contractEndDate: '',
+      terminationDate: '',
+      terminationReason: '',
+      employmentStatus: 'Active'
+    },
+    compensationInfo: {
+      salaryStructure: {
+        baseSalary: 0,
+        currency: 'USD',
+        payFrequency: 'Monthly',
+        allowances: {
+          transport: 0,
+          medical: 0,
+          housing: 0,
+          meal: 0,
+          communication: 0,
+          other: 0
+        }
+      },
+      benefits: {
+        medicalInsurance: false,
+        lifeInsurance: false,
+        pensionScheme: false,
+        annualLeave: 21,
+        sickLeave: 10,
+        maternityLeave: 90,
+        paternityLeave: 10
+      },
+      taxInfo: {
+        taxId: '',
+        taxExemptions: 0,
+        socialSecurityNumber: ''
+      }
+    },
+    bankingInfo: {
+      bankName: '',
+      accountNumber: '',
+      accountName: '',
+      bankBranch: '',
+      swiftCode: '',
+      paymentMethod: 'Bank Transfer',
+      mobileMoneyNumber: ''
+    },
+    contactInfo: {
+      personalEmail: '',
+      workEmail: '',
+      personalPhone: '',
+      workPhone: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: ''
+      },
+      emergencyContacts: []
+    },
+    systemInfo: {
+      createdBy: user?.name || '',
+      createdDate: new Date().toISOString(),
+      lastUpdatedBy: '',
+      lastUpdatedDate: '',
+      profileCompletionPercentage: 0
+    }
   });
 
   // Enhanced employee data with additional fields
@@ -899,238 +1111,605 @@ export default function EmployeeRecords() {
 
       {/* Add Employee Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Employee</DialogTitle>
             <DialogDescription>
-              Create a new employee record for Horizon Bank. Fill in all required information.
+              Create a comprehensive employee profile with all required information
             </DialogDescription>
           </DialogHeader>
           
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="work">Work Details</TabsTrigger>
-              <TabsTrigger value="personal">Personal Info</TabsTrigger>
-            </TabsList>
+          <div className="space-y-6">
+            {/* Step Indicator */}
+            <div className="flex items-center justify-between">
+              <div className="flex space-x-4">
+                {[1, 2, 3, 4, 5].map((step) => (
+                  <div key={step} className="flex items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                      employeeFormStep >= step 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-200 text-gray-600'
+                    }`}>
+                      {step}
+                    </div>
+                    {step < 5 && (
+                      <div className={`w-8 h-1 mx-2 ${
+                        employeeFormStep > step ? 'bg-blue-600' : 'bg-gray-200'
+                      }`} />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="text-sm text-gray-600">
+                Step {employeeFormStep} of 5
+              </div>
+            </div>
 
-            <TabsContent value="basic" className="space-y-4 mt-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="add-name">Full Name *</Label>
-                  <Input
-                    id="add-name"
-                    value={employeeForm.name}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, name: e.target.value })}
-                    placeholder="e.g. John Doe"
-                  />
+            {/* Step 1: Personal Information */}
+            {employeeFormStep === 1 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name *</Label>
+                    <Input
+                      id="firstName"
+                      value={comprehensiveEmployeeForm.personalInfo?.firstName || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        personalInfo: {
+                          ...comprehensiveEmployeeForm.personalInfo!,
+                          firstName: e.target.value,
+                          fullName: `${e.target.value} ${comprehensiveEmployeeForm.personalInfo?.lastName || ''}`.trim()
+                        }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name *</Label>
+                    <Input
+                      id="lastName"
+                      value={comprehensiveEmployeeForm.personalInfo?.lastName || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        personalInfo: {
+                          ...comprehensiveEmployeeForm.personalInfo!,
+                          lastName: e.target.value,
+                          fullName: `${comprehensiveEmployeeForm.personalInfo?.firstName || ''} ${e.target.value}`.trim()
+                        }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gender">Gender *</Label>
+                    <Select 
+                      value={comprehensiveEmployeeForm.personalInfo?.gender} 
+                      onValueChange={(value: any) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        personalInfo: { ...comprehensiveEmployeeForm.personalInfo!, gender: value }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                        <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nationality">Nationality *</Label>
+                    <Input
+                      id="nationality"
+                      value={comprehensiveEmployeeForm.personalInfo?.nationality || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        personalInfo: { ...comprehensiveEmployeeForm.personalInfo!, nationality: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={comprehensiveEmployeeForm.personalInfo?.dateOfBirth || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        personalInfo: { ...comprehensiveEmployeeForm.personalInfo!, dateOfBirth: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maritalStatus">Marital Status</Label>
+                    <Select 
+                      value={comprehensiveEmployeeForm.personalInfo?.maritalStatus} 
+                      onValueChange={(value: any) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        personalInfo: { ...comprehensiveEmployeeForm.personalInfo!, maritalStatus: value }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Single">Single</SelectItem>
+                        <SelectItem value="Married">Married</SelectItem>
+                        <SelectItem value="Divorced">Divorced</SelectItem>
+                        <SelectItem value="Widowed">Widowed</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-email">Email Address *</Label>
-                  <Input
-                    id="add-email"
-                    type="email"
-                    value={employeeForm.email}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, email: e.target.value })}
-                    placeholder="john.doe@horizonbankss.com"
-                  />
+
+                <div className="space-y-4">
+                  <h4 className="text-md font-semibold text-gray-800">Identity Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="nationalId">National ID</Label>
+                      <Input
+                        id="nationalId"
+                        value={comprehensiveEmployeeForm.identityInfo?.nationalId || ''}
+                        onChange={(e) => setComprehensiveEmployeeForm({
+                          ...comprehensiveEmployeeForm,
+                          identityInfo: { ...comprehensiveEmployeeForm.identityInfo!, nationalId: e.target.value }
+                        })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="passportNumber">Passport Number</Label>
+                      <Input
+                        id="passportNumber"
+                        value={comprehensiveEmployeeForm.identityInfo?.passportNumber || ''}
+                        onChange={(e) => setComprehensiveEmployeeForm({
+                          ...comprehensiveEmployeeForm,
+                          identityInfo: { ...comprehensiveEmployeeForm.identityInfo!, passportNumber: e.target.value }
+                        })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="immigrationStatus">Immigration Status *</Label>
+                      <Select 
+                        value={comprehensiveEmployeeForm.identityInfo?.immigrationStatus} 
+                        onValueChange={(value: any) => setComprehensiveEmployeeForm({
+                          ...comprehensiveEmployeeForm,
+                          identityInfo: { ...comprehensiveEmployeeForm.identityInfo!, immigrationStatus: value }
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="National">National</SelectItem>
+                          <SelectItem value="Work Permit">Work Permit</SelectItem>
+                          <SelectItem value="Resident">Resident</SelectItem>
+                          <SelectItem value="Temporary Visa">Temporary Visa</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="workPermitNumber">Work Permit Number</Label>
+                      <Input
+                        id="workPermitNumber"
+                        value={comprehensiveEmployeeForm.identityInfo?.workPermitNumber || ''}
+                        onChange={(e) => setComprehensiveEmployeeForm({
+                          ...comprehensiveEmployeeForm,
+                          identityInfo: { ...comprehensiveEmployeeForm.identityInfo!, workPermitNumber: e.target.value }
+                        })}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
+            )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="add-phone">Phone Number *</Label>
-                  <Input
-                    id="add-phone"
-                    value={employeeForm.phone}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, phone: e.target.value })}
-                    placeholder="+211 xxx xxx xxx"
-                  />
+            {/* Step 2: Identity Information */}
+            {employeeFormStep === 2 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">Identity Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="religion">Religion</Label>
+                    <Input
+                      id="religion"
+                      value={comprehensiveEmployeeForm.personalInfo?.religion || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        personalInfo: { ...comprehensiveEmployeeForm.personalInfo!, religion: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nationality">Nationality *</Label>
+                    <Input
+                      id="nationality"
+                      value={comprehensiveEmployeeForm.personalInfo?.nationality || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        personalInfo: { ...comprehensiveEmployeeForm.personalInfo!, nationality: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={comprehensiveEmployeeForm.personalInfo?.dateOfBirth || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        personalInfo: { ...comprehensiveEmployeeForm.personalInfo!, dateOfBirth: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maritalStatus">Marital Status</Label>
+                    <Select 
+                      value={comprehensiveEmployeeForm.personalInfo?.maritalStatus} 
+                      onValueChange={(value: any) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        personalInfo: { ...comprehensiveEmployeeForm.personalInfo!, maritalStatus: value }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Single">Single</SelectItem>
+                        <SelectItem value="Married">Married</SelectItem>
+                        <SelectItem value="Divorced">Divorced</SelectItem>
+                        <SelectItem value="Widowed">Widowed</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-location">Location *</Label>
-                  <Select 
-                    value={employeeForm.location} 
-                    onValueChange={(value) => setEmployeeForm({ ...employeeForm, location: value })}
+              </div>
+            )}
+
+            {/* Step 3: Employment Details */}
+            {employeeFormStep === 3 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">Employment Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contractType">Contract Type *</Label>
+                    <Select 
+                      value={comprehensiveEmployeeForm.employmentInfo?.contractType} 
+                      onValueChange={(value) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        employmentInfo: { ...comprehensiveEmployeeForm.employmentInfo!, contractType: value }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Permanent">Permanent</SelectItem>
+                        <SelectItem value="Temporary">Temporary</SelectItem>
+                        <SelectItem value="Probationary">Probationary</SelectItem>
+                        <SelectItem value="Contract">Contract</SelectItem>
+                        <SelectItem value="Internship">Internship</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="jobTitle">Job Title *</Label>
+                    <Input
+                      id="jobTitle"
+                      value={comprehensiveEmployeeForm.employmentInfo?.jobTitle || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        employmentInfo: { ...comprehensiveEmployeeForm.employmentInfo!, jobTitle: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="jobDescription">Job Description</Label>
+                    <Textarea
+                      id="jobDescription"
+                      value={comprehensiveEmployeeForm.employmentInfo?.jobDescription || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        employmentInfo: { ...comprehensiveEmployeeForm.employmentInfo!, jobDescription: e.target.value }
+                      })}
+                      rows={2}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="department">Department *</Label>
+                    <Input
+                      id="department"
+                      value={comprehensiveEmployeeForm.employmentInfo?.department || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        employmentInfo: { ...comprehensiveEmployeeForm.employmentInfo!, department: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="directSupervisor">Direct Supervisor</Label>
+                    <Input
+                      id="directSupervisor"
+                      value={comprehensiveEmployeeForm.employmentInfo?.directSupervisor || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        employmentInfo: { ...comprehensiveEmployeeForm.employmentInfo!, directSupervisor: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="workLocation">Work Location *</Label>
+                    <Input
+                      id="workLocation"
+                      value={comprehensiveEmployeeForm.employmentInfo?.workLocation || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        employmentInfo: { ...comprehensiveEmployeeForm.employmentInfo!, workLocation: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="employmentStartDate">Employment Start Date *</Label>
+                    <Input
+                      id="employmentStartDate"
+                      type="date"
+                      value={comprehensiveEmployeeForm.employmentInfo?.employmentStartDate || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        employmentInfo: { ...comprehensiveEmployeeForm.employmentInfo!, employmentStartDate: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="probationEndDate">Probation End Date</Label>
+                    <Input
+                      id="probationEndDate"
+                      type="date"
+                      value={comprehensiveEmployeeForm.employmentInfo?.probationEndDate || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        employmentInfo: { ...comprehensiveEmployeeForm.employmentInfo!, probationEndDate: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contractEndDate">Contract End Date</Label>
+                    <Input
+                      id="contractEndDate"
+                      type="date"
+                      value={comprehensiveEmployeeForm.employmentInfo?.contractEndDate || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        employmentInfo: { ...comprehensiveEmployeeForm.employmentInfo!, contractEndDate: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="terminationDate">Termination Date</Label>
+                    <Input
+                      id="terminationDate"
+                      type="date"
+                      value={comprehensiveEmployeeForm.employmentInfo?.terminationDate || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        employmentInfo: { ...comprehensiveEmployeeForm.employmentInfo!, terminationDate: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="terminationReason">Termination Reason</Label>
+                    <Textarea
+                      id="terminationReason"
+                      value={comprehensiveEmployeeForm.employmentInfo?.terminationReason || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        employmentInfo: { ...comprehensiveEmployeeForm.employmentInfo!, terminationReason: e.target.value }
+                      })}
+                      rows={2}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="employmentStatus">Employment Status *</Label>
+                    <Select 
+                      value={comprehensiveEmployeeForm.employmentInfo?.employmentStatus} 
+                      onValueChange={(value) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        employmentInfo: { ...comprehensiveEmployeeForm.employmentInfo!, employmentStatus: value }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="On Leave">On Leave</SelectItem>
+                        <SelectItem value="Suspended">Suspended</SelectItem>
+                        <SelectItem value="Terminated">Terminated</SelectItem>
+                        <SelectItem value="Resigned">Resigned</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Compensation & Benefits */}
+            {employeeFormStep === 4 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">Compensation & Benefits</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="salaryStructure">Salary Structure</Label>
+                    <Textarea
+                      id="salaryStructure"
+                      value={comprehensiveEmployeeForm.compensationInfo?.salaryStructure || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        compensationInfo: { ...comprehensiveEmployeeForm.compensationInfo!, salaryStructure: JSON.parse(e.target.value) }
+                      })}
+                      rows={2}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="benefits">Benefits</Label>
+                    <Textarea
+                      id="benefits"
+                      value={comprehensiveEmployeeForm.compensationInfo?.benefits || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        compensationInfo: { ...comprehensiveEmployeeForm.compensationInfo!, benefits: JSON.parse(e.target.value) }
+                      })}
+                      rows={2}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="taxInfo">Tax Information</Label>
+                    <Textarea
+                      id="taxInfo"
+                      value={comprehensiveEmployeeForm.compensationInfo?.taxInfo || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        compensationInfo: { ...comprehensiveEmployeeForm.compensationInfo!, taxInfo: JSON.parse(e.target.value) }
+                      })}
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 5: Banking & Payment */}
+            {employeeFormStep === 5 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">Banking & Payment</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bankName">Bank Name</Label>
+                    <Input
+                      id="bankName"
+                      value={comprehensiveEmployeeForm.bankingInfo?.bankName || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        bankingInfo: { ...comprehensiveEmployeeForm.bankingInfo!, bankName: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="accountNumber">Account Number *</Label>
+                    <Input
+                      id="accountNumber"
+                      value={comprehensiveEmployeeForm.bankingInfo?.accountNumber || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        bankingInfo: { ...comprehensiveEmployeeForm.bankingInfo!, accountNumber: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="accountName">Account Name *</Label>
+                    <Input
+                      id="accountName"
+                      value={comprehensiveEmployeeForm.bankingInfo?.accountName || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        bankingInfo: { ...comprehensiveEmployeeForm.bankingInfo!, accountName: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bankBranch">Bank Branch</Label>
+                    <Input
+                      id="bankBranch"
+                      value={comprehensiveEmployeeForm.bankingInfo?.bankBranch || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        bankingInfo: { ...comprehensiveEmployeeForm.bankingInfo!, bankBranch: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="swiftCode">SWIFT Code</Label>
+                    <Input
+                      id="swiftCode"
+                      value={comprehensiveEmployeeForm.bankingInfo?.swiftCode || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        bankingInfo: { ...comprehensiveEmployeeForm.bankingInfo!, swiftCode: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="paymentMethod">Payment Method *</Label>
+                    <Select 
+                      value={comprehensiveEmployeeForm.bankingInfo?.paymentMethod} 
+                      onValueChange={(value) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        bankingInfo: { ...comprehensiveEmployeeForm.bankingInfo!, paymentMethod: value }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                        <SelectItem value="Cash">Cash</SelectItem>
+                        <SelectItem value="Check">Check</SelectItem>
+                        <SelectItem value="Mobile Money">Mobile Money</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mobileMoneyNumber">Mobile Money Number</Label>
+                    <Input
+                      id="mobileMoneyNumber"
+                      value={comprehensiveEmployeeForm.bankingInfo?.mobileMoneyNumber || ''}
+                      onChange={(e) => setComprehensiveEmployeeForm({
+                        ...comprehensiveEmployeeForm,
+                        bankingInfo: { ...comprehensiveEmployeeForm.bankingInfo!, mobileMoneyNumber: e.target.value }
+                      })}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between pt-4 border-t">
+              <Button 
+                variant="outline" 
+                onClick={() => setEmployeeFormStep(Math.max(1, employeeFormStep - 1))}
+                disabled={employeeFormStep === 1}
+              >
+                Previous
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                  Cancel
+                </Button>
+                {employeeFormStep < 5 ? (
+                  <Button 
+                    onClick={() => setEmployeeFormStep(employeeFormStep + 1)}
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Juba, South Sudan">Juba, South Sudan</SelectItem>
-                      <SelectItem value="Wau, South Sudan">Wau, South Sudan</SelectItem>
-                      <SelectItem value="Malakal, South Sudan">Malakal, South Sudan</SelectItem>
-                      <SelectItem value="Yei, South Sudan">Yei, South Sudan</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="add-address">Address</Label>
-                <Textarea
-                  id="add-address"
-                  value={employeeForm.address}
-                  onChange={(e) => setEmployeeForm({ ...employeeForm, address: e.target.value })}
-                  placeholder="Complete address"
-                  rows={2}
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="work" className="space-y-4 mt-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="add-department">Department *</Label>
-                  <Select 
-                    value={employeeForm.department} 
-                    onValueChange={(value) => setEmployeeForm({ ...employeeForm, department: value })}
+                    Next
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={handleSaveEmployee}
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Human Resources">Human Resources</SelectItem>
-                      <SelectItem value="Corporate Banking">Corporate Banking</SelectItem>
-                      <SelectItem value="Personal Banking">Personal Banking</SelectItem>
-                      <SelectItem value="Trade Finance">Trade Finance</SelectItem>
-                      <SelectItem value="Finance & Accounting">Finance & Accounting</SelectItem>
-                      <SelectItem value="Risk Management">Risk Management</SelectItem>
-                      <SelectItem value="Information Technology">Information Technology</SelectItem>
-                      <SelectItem value="Operations">Operations</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-position">Position *</Label>
-                  <Input
-                    id="add-position"
-                    value={employeeForm.position}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, position: e.target.value })}
-                    placeholder="e.g. Senior Credit Analyst"
-                  />
-                </div>
+                    Create Employee
+                  </Button>
+                )}
               </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="add-bankingRole">Banking Role *</Label>
-                  <Select 
-                    value={employeeForm.bankingRole} 
-                    onValueChange={(value) => setEmployeeForm({ ...employeeForm, bankingRole: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Management">Management</SelectItem>
-                      <SelectItem value="Leadership">Leadership</SelectItem>
-                      <SelectItem value="Customer Service">Customer Service</SelectItem>
-                      <SelectItem value="Credit Analysis">Credit Analysis</SelectItem>
-                      <SelectItem value="Operations">Operations</SelectItem>
-                      <SelectItem value="Risk & Compliance">Risk & Compliance</SelectItem>
-                      <SelectItem value="Technology">Technology</SelectItem>
-                      <SelectItem value="Support">Support</SelectItem>
-                      <SelectItem value="Specialist">Specialist</SelectItem>
-                      <SelectItem value="Branch Operations">Branch Operations</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-status">Status</Label>
-                  <Select 
-                    value={employeeForm.status} 
-                    onValueChange={(value) => setEmployeeForm({ ...employeeForm, status: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Inactive">Inactive</SelectItem>
-                      <SelectItem value="On Leave">On Leave</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-salary">Salary</Label>
-                  <Input
-                    id="add-salary"
-                    value={employeeForm.salary}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, salary: e.target.value })}
-                    placeholder="e.g. $3,500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="add-manager">Manager/Supervisor</Label>
-                  <Input
-                    id="add-manager"
-                    value={employeeForm.manager}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, manager: e.target.value })}
-                    placeholder="e.g. John Smith"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-education">Education</Label>
-                  <Input
-                    id="add-education"
-                    value={employeeForm.education}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, education: e.target.value })}
-                    placeholder="e.g. Bachelor's Finance"
-                  />
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="personal" className="space-y-4 mt-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="add-nationalId">National ID</Label>
-                  <Input
-                    id="add-nationalId"
-                    value={employeeForm.nationalId}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, nationalId: e.target.value })}
-                    placeholder="SSxxxxxxxx"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-birthDate">Date of Birth</Label>
-                  <Input
-                    id="add-birthDate"
-                    type="date"
-                    value={employeeForm.birthDate}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, birthDate: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="add-emergencyContact">Emergency Contact</Label>
-                <Input
-                  id="add-emergencyContact"
-                  value={employeeForm.emergencyContact}
-                  onChange={(e) => setEmployeeForm({ ...employeeForm, emergencyContact: e.target.value })}
-                  placeholder="+211 xxx xxx xxx"
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          <DialogFooter className="mt-6">
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSaveEmployee}
-              disabled={!employeeForm.name || !employeeForm.email || !employeeForm.phone || !employeeForm.department || !employeeForm.position || !employeeForm.bankingRole}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-            >
-              Add Employee
-            </Button>
-          </DialogFooter>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

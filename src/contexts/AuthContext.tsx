@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type UserRole = 'HR Manager' | 'Recruiter' | 'Department Head' | 'Finance Officer' | 'Employee' | 'System Administrator';
+export type UserRole = 'System Administrator' | 'HR Manager' | 'Employee';
 
 export interface SecuritySettings {
   require2FA: boolean;
@@ -59,7 +59,7 @@ export interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Enhanced mock users for Horizon Bank with security profiles
+// Enhanced mock users for Horizon Bank with security profiles - Updated to 3 roles only
 const mockUsers: Record<string, { password: string; user: User; loginAttempts: number; lockedUntil?: Date }> = {
   'admin@horizonbankss.com': {
     password: 'HorizonSecure2024!',
@@ -75,65 +75,20 @@ const mockUsers: Record<string, { password: string; user: User; loginAttempts: n
       lastLoginAt: new Date(),
       ipAddress: '192.168.1.100',
       securityLevel: 'CRITICAL',
-      permissions: ['recruitment.create', 'recruitment.edit', 'recruitment.view', 'candidates.manage', 'interviews.schedule', 'team.view', 'team.manage', 'leave.approve', 'performance.evaluate', 'training.view', 'training.manage', 'payroll.view', 'payroll.manage', 'compliance.view', 'communications.view', 'users.view', 'reports.view'] // HR Manager has extensive HR permissions but NOT system.admin
-    }
-  },
-  'recruiter@horizonbankss.com': {
-    password: 'RecruiterSecure2024!',
-    loginAttempts: 0,
-    user: {
-      id: '2',
-      name: 'James Wani',
-      email: 'recruiter@horizonbankss.com',
-      role: 'Recruiter',
-      department: 'Human Resources',
-      avatar: '/placeholder-avatar.png',
-      is2FAEnabled: false,
-      lastLoginAt: new Date(),
-      ipAddress: '192.168.1.101',
-      securityLevel: 'HIGH',
-      permissions: ['recruitment.create', 'recruitment.edit', 'recruitment.view', 'candidates.manage', 'interviews.schedule', 'communications.view']
-    }
-  },
-  'manager@horizonbankss.com': {
-    password: 'ManagerSecure2024!',
-    loginAttempts: 0,
-    user: {
-      id: '3',
-      name: 'Mary Deng',
-      email: 'manager@horizonbankss.com',
-      role: 'Department Head',
-      department: 'Corporate Banking',
-      avatar: '/placeholder-avatar.png',
-      is2FAEnabled: false,
-      lastLoginAt: new Date(),
-      ipAddress: '192.168.1.102',
-      securityLevel: 'HIGH',
-      permissions: ['team.view', 'team.manage', 'leave.approve', 'performance.evaluate', 'training.view', 'communications.view']
-    }
-  },
-  'finance@horizonbankss.com': {
-    password: 'FinanceSecure2024!',
-    loginAttempts: 0,
-    user: {
-      id: '4',
-      name: 'Peter Garang',
-      email: 'finance@horizonbankss.com',
-      role: 'Finance Officer',
-      department: 'Finance & Accounting',
-      avatar: '/placeholder-avatar.png',
-      is2FAEnabled: false,
-      lastLoginAt: new Date(),
-      ipAddress: '192.168.1.103',
-      securityLevel: 'CRITICAL',
-      permissions: ['payroll.manage', 'payroll.view', 'taxes.manage', 'reports.financial', 'compliance.financial', 'communications.view']
+      permissions: [
+        // Consolidated permissions from HR Manager, Department Head, Recruiter, and Finance Officer
+        'recruitment.create', 'recruitment.edit', 'recruitment.view', 'candidates.manage', 'interviews.schedule',
+        'team.view', 'team.manage', 'leave.approve', 'performance.evaluate', 'training.view', 'training.manage',
+        'payroll.view', 'payroll.manage', 'finance.approve', 'taxes.manage', 'reports.financial', 'compliance.financial',
+        'goals.manage', 'compliance.view', 'communications.view', 'users.view', 'reports.view', 'compliance.manage'
+      ]
     }
   },
   'employee@horizonbankss.com': {
     password: 'EmployeeSecure2024!',
     loginAttempts: 0,
     user: {
-      id: '5',
+      id: '3',
       name: 'Grace Ajak',
       email: 'employee@horizonbankss.com',
       role: 'Employee',
@@ -150,7 +105,7 @@ const mockUsers: Record<string, { password: string; user: User; loginAttempts: n
     password: 'SysAdminSecure2024!',
     loginAttempts: 0,
     user: {
-      id: '6',
+      id: '4',
       name: 'Tech Administrator',
       email: 'sysadmin@horizonbankss.com',
       role: 'System Administrator',
@@ -189,18 +144,25 @@ const moduleAccess: Record<string, string[]> = {
   '/recruitment/edit': ['recruitment.edit', '*'],
   '/employees': ['team.view', 'team.manage', '*'],
   '/employees/edit': ['team.manage', '*'],
-  '/payroll': ['payroll.view', 'payroll.manage', '*'],
+  '/payroll': ['payroll.view', 'payroll.manage', 'finance.approve', '*'],
   '/payroll/process': ['payroll.manage', '*'],
   '/performance': ['performance.view', 'performance.evaluate', '*'],
   '/training': ['training.view', '*'],
   '/training/manage': ['training.manage', '*'],
   '/compliance': ['compliance.view', 'compliance.financial', '*'],
+  '/disciplinary': ['compliance.view', 'compliance.manage', '*'], // Disciplinary & Grievance Management
   '/communications': ['communications.view', '*'],
+  '/benefits': ['*'], // Benefits Management accessible to all
+  '/test-benefits': ['*'], // Test Benefits accessible to all
+  '/time-attendance': ['*'], // Time & Attendance accessible to all
   '/certifications': ['*'], // Banking certifications accessible to all
   '/analytics': ['*'], // Analytics accessible to all
   '/workflows': ['*'], // Workflows accessible to all
   '/admin': ['system.admin'], // ONLY system administrators
-  '/audit': ['system.admin'] // ONLY system administrators
+  '/audit': ['system.admin'], // ONLY system administrators
+  '/leave': ['leave.view', 'leave.approve', '*'], // Leave Management
+  '/leave-calendar': ['*'], // Leave Calendar accessible to all
+  '/leave-attendance': ['leave.view', 'leave.approve', '*'], // Leave & Attendance Management
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

@@ -25,22 +25,13 @@ export default function Index() {
   useEffect(() => {
     if (!user) return;
 
-    // Redirect users to their most relevant page based on role
+    // Redirect users to their most relevant page based on role - Updated to 3 roles only
     switch (user.role) {
       case 'Employee':
         navigate('/employee-dashboard');
         break;
       case 'HR Manager':
         navigate('/employees');
-        break;
-      case 'Recruiter':
-        navigate('/recruitment');
-        break;
-      case 'Department Head':
-        navigate('/employees');
-        break;
-      case 'Finance Officer':
-        navigate('/payroll');
         break;
       case 'System Administrator':
         navigate('/admin');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -30,18 +30,34 @@ import {
   Users,
   TrendingUp,
   Eye,
-  MoreVertical
+  MoreVertical,
+  Shield,
+  Info,
+  X,
+  Check
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Database } from '@/integrations/supabase/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  LEAVE_TYPES, 
+  validateLeaveRequest, 
+  calculateLeaveEntitlement,
+  calculateLeaveAccrual,
+  PUBLIC_HOLIDAYS_2025,
+  getPublicHolidaysInRange,
+  calculateWorkingDays,
+  generateComplianceReport
+} from '@/lib/leaveUtils';
+import PublicHolidayManagement from '@/components/PublicHolidayManagement';
 
 // Map comprehensive leave types to database enum values
 type DbLeaveType = Database['public']['Enums']['leave_type'];
 
 // Comprehensive Leave Types Configuration with database mapping
-const LEAVE_TYPES = {
+const LEAVE_TYPES_CONFIG = {
   annual: { 
     name: 'Annual Leave', 
     color: 'bg-blue-100 text-blue-800',
@@ -136,6 +152,8 @@ interface LeaveBalance {
   used_days: number;
   remaining_days: number;
   year: number;
+  accrued_days?: number;
+  carry_over_days?: number;
 }
 
 interface LeaveRequest {
@@ -145,18 +163,23 @@ interface LeaveRequest {
   start_date: string;
   end_date: string;
   days_requested: number;
+  working_days_requested?: number;
   reason: string;
   status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   created_at: string;
   approved_by?: string;
   approved_date?: string;
   comments?: string;
+  attachment_url?: string;
+  public_holidays_in_period?: string[];
   employee?: {
     first_name: string;
     last_name: string;
     employee_id: string;
     position: string;
     department_id: string;
+    hire_date?: string;
+    contract_type?: 'permanent' | 'temporary' | 'contract' | 'probation';
   };
   approver?: {
     first_name: string;
@@ -165,28 +188,30 @@ interface LeaveRequest {
 }
 
 const LeaveManagement = () => {
+  const { user, hasPermission } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [leaveTypeFilter, setLeaveTypeFilter] = useState('all');
   const [showRequestDialog, setShowRequestDialog] = useState(false);
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
-  const [showEntitlementDialog, setShowEntitlementDialog] = useState(false);
+  const [showComplianceDialog, setShowComplianceDialog] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
   const [approvalNotes, setApprovalNotes] = useState('');
 
   const [requestForm, setRequestForm] = useState({
-    employee_id: '',
+    employee_id: user?.id || '',
     leave_type: 'annual' as keyof typeof LEAVE_TYPES,
     start_date: '',
     end_date: '',
     reason: '',
-    days_requested: 0
+    days_requested: 0,
+    attachment: null as File | null
   });
 
   const queryClient = useQueryClient();
 
-  // Fetch leave requests
+  // Fetch leave requests with enhanced data
   const { data: leaveRequests, isLoading: requestsLoading } = useQuery({
     queryKey: ['leave-requests'],
     queryFn: async () => {
@@ -194,17 +219,38 @@ const LeaveManagement = () => {
         .from('leave_requests')
         .select(`
           *,
-          employee:profiles!employee_id(first_name, last_name, employee_id, position, department_id),
+          employee:profiles!employee_id(
+            first_name, 
+            last_name, 
+            employee_id, 
+            position, 
+            department_id,
+            hire_date,
+            contract_type
+          ),
           approver:profiles!approved_by(first_name, last_name)
         `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as LeaveRequest[];
+      
+      // Enhance requests with working days calculation and holiday information
+      const enhancedRequests = data?.map(request => {
+        const workingDays = calculateWorkingDays(request.start_date, request.end_date);
+        const holidaysInPeriod = getPublicHolidaysInRange(request.start_date, request.end_date);
+        
+        return {
+          ...request,
+          working_days_requested: workingDays,
+          public_holidays_in_period: holidaysInPeriod.map(h => h.name)
+        };
+      });
+
+      return enhancedRequests as LeaveRequest[];
     }
   });
 
-  // Fetch leave balances
+  // Fetch leave balances with accrual information
   const { data: leaveBalances, isLoading: balancesLoading } = useQuery({
     queryKey: ['leave-balances'],
     queryFn: async () => {
@@ -214,37 +260,78 @@ const LeaveManagement = () => {
         .eq('year', new Date().getFullYear());
       
       if (error) throw error;
-      return data as LeaveBalance[];
-    }
-  });
-
-  // Fetch employees
-  const { data: employees } = useQuery({
-    queryKey: ['employees'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, employee_id, position, department_id')
-        .eq('role', 'employee');
       
-      if (error) throw error;
-      return data;
-    }
+      // Enhance balances with accrual information
+      const enhancedBalances = data?.map(balance => {
+        const employee = leaveRequests?.find(r => r.employee_id === balance.employee_id)?.employee;
+        if (employee?.hire_date) {
+          const entitlement = calculateLeaveEntitlement(
+            balance.leave_type as keyof typeof LEAVE_TYPES,
+            employee.contract_type || 'permanent',
+            employee.hire_date
+          );
+          
+          const accrualInfo = calculateLeaveAccrual(
+            balance.leave_type as keyof typeof LEAVE_TYPES,
+            entitlement,
+            employee.hire_date
+          );
+          
+          return {
+            ...balance,
+            accrued_days: accrualInfo.accruedToDate,
+            total_days: accrualInfo.totalEntitlement
+          };
+        }
+        return balance;
+      });
+
+      return enhancedBalances as LeaveBalance[];
+    },
+    enabled: !!leaveRequests
   });
 
-  // Submit leave request mutation
+  // Enhanced leave request submission with validation
   const submitRequestMutation = useMutation({
-    mutationFn: async (request: typeof requestForm) => {
-      const selectedLeaveType = LEAVE_TYPES[request.leave_type];
+    mutationFn: async (requestData: any) => {
+      const employee = leaveRequests?.find(r => r.employee_id === requestData.employee_id)?.employee;
+      const currentBalance = leaveBalances?.find(
+        b => b.employee_id === requestData.employee_id && 
+             b.leave_type === LEAVE_TYPES[requestData.leave_type].dbValue
+      );
+
+      // Enhanced validation
+      const validation = validateLeaveRequest(
+        requestData.leave_type,
+        requestData.start_date,
+        requestData.end_date,
+        currentBalance,
+        {
+          contractType: employee?.contract_type || 'permanent',
+          hireDate: employee?.hire_date || new Date().toISOString()
+        }
+      );
+
+      if (!validation.isValid) {
+        throw new Error(validation.errors.join(', '));
+      }
+
+      // Show warnings to user
+      if (validation.warnings && validation.warnings.length > 0) {
+        toast.warning(`Warnings: ${validation.warnings.join(', ')}`);
+      }
+
+      const workingDays = calculateWorkingDays(requestData.start_date, requestData.end_date);
+      
       const { data, error } = await supabase
         .from('leave_requests')
         .insert([{
-          employee_id: request.employee_id,
-          leave_type: selectedLeaveType.dbValue,
-          start_date: request.start_date,
-          end_date: request.end_date,
-          days_requested: request.days_requested,
-          reason: request.reason,
+          employee_id: requestData.employee_id,
+          leave_type: LEAVE_TYPES[requestData.leave_type].dbValue,
+          start_date: requestData.start_date,
+          end_date: requestData.end_date,
+          days_requested: validation.requestedDays,
+          reason: requestData.reason,
           status: 'pending'
         }])
         .select()
@@ -255,67 +342,77 @@ const LeaveManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leave-requests'] });
-      toast.success('Leave request submitted successfully');
       setShowRequestDialog(false);
       resetRequestForm();
+      toast.success('Leave request submitted successfully');
     },
-    onError: (error) => {
-      toast.error('Failed to submit leave request');
-      console.error(error);
+    onError: (error: any) => {
+      toast.error(`Failed to submit request: ${error.message}`);
     }
   });
 
-  // Approve/Reject leave request mutation
+  // Approve/Reject leave request
   const approveRequestMutation = useMutation({
-    mutationFn: async ({ id, action, notes }: { id: string; action: 'approve' | 'reject'; notes: string }) => {
+    mutationFn: async ({ requestId, status, comments }: { 
+      requestId: string; 
+      status: 'approved' | 'rejected'; 
+      comments: string 
+    }) => {
       const { data, error } = await supabase
         .from('leave_requests')
         .update({
-          status: action === 'approve' ? 'approved' : 'rejected',
+          status,
+          approved_by: user?.id,
           approved_date: new Date().toISOString(),
-          comments: notes
+          comments
         })
-        .eq('id', id)
+        .eq('id', requestId)
         .select()
         .single();
       
       if (error) throw error;
 
-      // Update leave balance if approved
-      if (action === 'approve' && selectedRequest) {
-        // First get current balance
-        const { data: currentBalance } = await supabase
+      // If approved, update leave balances
+      if (status === 'approved') {
+        const request = leaveRequests?.find(r => r.id === requestId);
+        if (request) {
+          // First, get current balance
+          const { data: currentBalance, error: fetchError } = await supabase
           .from('leave_balances')
           .select('used_days, remaining_days')
-          .eq('employee_id', selectedRequest.employee_id)
-          .eq('leave_type', selectedRequest.leave_type)
+            .eq('employee_id', request.employee_id)
+            .eq('leave_type', request.leave_type)
           .eq('year', new Date().getFullYear())
           .single();
 
+          if (fetchError) throw fetchError;
+
+          // Update with calculated values
         const { error: balanceError } = await supabase
           .from('leave_balances')
           .update({
-            used_days: (currentBalance?.used_days || 0) + selectedRequest.days_requested,
-            remaining_days: (currentBalance?.remaining_days || 0) - selectedRequest.days_requested
+              used_days: (currentBalance.used_days || 0) + request.days_requested,
+              remaining_days: (currentBalance.remaining_days || 0) - request.days_requested
           })
-          .eq('employee_id', selectedRequest.employee_id)
-          .eq('leave_type', selectedRequest.leave_type)
+            .eq('employee_id', request.employee_id)
+            .eq('leave_type', request.leave_type)
           .eq('year', new Date().getFullYear());
         
-        if (balanceError) console.error('Error updating balance:', balanceError);
+          if (balanceError) throw balanceError;
+        }
       }
 
       return data;
     },
-    onSuccess: (_, { action }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leave-requests'] });
       queryClient.invalidateQueries({ queryKey: ['leave-balances'] });
-      toast.success(`Leave request ${action}d successfully`);
       setShowApprovalDialog(false);
       setSelectedRequest(null);
       setApprovalNotes('');
+      toast.success('Leave request processed successfully');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error('Failed to process leave request');
       console.error(error);
     }
@@ -331,23 +428,22 @@ const LeaveManagement = () => {
 
   const resetRequestForm = () => {
     setRequestForm({
-      employee_id: '',
+      employee_id: user?.id || '',
       leave_type: 'annual',
       start_date: '',
       end_date: '',
       reason: '',
-      days_requested: 0
+      days_requested: 0,
+      attachment: null
     });
   };
 
   const getLeaveTypeBadge = (dbType: DbLeaveType, customType?: keyof typeof LEAVE_TYPES) => {
-    // Find the leave type config by database value or custom type
     const leaveTypeEntry = customType ? 
       LEAVE_TYPES[customType] : 
       Object.values(LEAVE_TYPES).find(config => config.dbValue === dbType);
     
     if (!leaveTypeEntry) {
-      // Fallback for unknown types
       return (
         <Badge className="bg-gray-100 text-gray-800">
           {dbType}
@@ -377,13 +473,30 @@ const LeaveManagement = () => {
     );
   };
 
-  // Filter leave requests
+  const getPriorityBadge = (request: LeaveRequest) => {
+    const leaveConfig = Object.values(LEAVE_TYPES).find(
+      config => config.dbValue === request.leave_type
+    );
+    
+    const isUrgent = leaveConfig?.name === 'Sick Leave' || 
+                    leaveConfig?.name === 'Compassionate (Bereavement) Leave' ||
+                    leaveConfig?.name === 'Maternity Leave';
+    
+    if (isUrgent) {
+      return <Badge className="bg-red-100 text-red-800">Urgent</Badge>;
+    }
+    
+    return null;
+  };
+
+  // Filter requests based on search and filters
   const filteredRequests = leaveRequests?.filter(request => {
-    const matchesSearch = 
-      request.employee?.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.employee?.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.employee?.employee_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.reason.toLowerCase().includes(searchQuery.toLowerCase());
+    const employee = request.employee;
+    const matchesSearch = employee ? 
+      `${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      employee.employee_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.reason.toLowerCase().includes(searchQuery.toLowerCase())
+      : false;
     
     const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
     const matchesType = leaveTypeFilter === 'all' || request.leave_type === leaveTypeFilter;
@@ -392,28 +505,31 @@ const LeaveManagement = () => {
   });
 
   // Calculate dashboard statistics
-  const stats = {
+  const dashboardStats = {
+    totalRequests: leaveRequests?.length || 0,
     pendingRequests: leaveRequests?.filter(r => r.status === 'pending').length || 0,
-    approvedToday: leaveRequests?.filter(r => 
-      r.status === 'approved' && 
-      new Date(r.approved_date || '').toDateString() === new Date().toDateString()
-    ).length || 0,
-    onLeaveToday: leaveRequests?.filter(r => {
-      const today = new Date().toISOString().split('T')[0];
-      return r.status === 'approved' && r.start_date <= today && r.end_date >= today;
-    }).length || 0,
-    rejectedThisMonth: leaveRequests?.filter(r => 
-      r.status === 'rejected' &&
-      new Date(r.created_at).getMonth() === new Date().getMonth()
-    ).length || 0
+    approvedRequests: leaveRequests?.filter(r => r.status === 'approved').length || 0,
+    rejectedRequests: leaveRequests?.filter(r => r.status === 'rejected').length || 0,
+    urgentRequests: leaveRequests?.filter(r => {
+      const leaveConfig = Object.values(LEAVE_TYPES).find(config => config.dbValue === r.leave_type);
+      return (leaveConfig?.name === 'Sick Leave' || leaveConfig?.name === 'Compassionate (Bereavement) Leave') 
+             && r.status === 'pending';
+    }).length || 0
   };
 
-  useEffect(() => {
-    if (requestForm.start_date && requestForm.end_date) {
-      const days = calculateDays(requestForm.start_date, requestForm.end_date);
-      setRequestForm(prev => ({ ...prev, days_requested: days }));
-    }
-  }, [requestForm.start_date, requestForm.end_date]);
+  const generateComplianceReportData = () => {
+    const report = generateComplianceReport();
+    const dataStr = JSON.stringify(report, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'leave-compliance-report.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Compliance report generated successfully');
+  };
 
   if (requestsLoading || balancesLoading) {
     return (
@@ -427,93 +543,113 @@ const LeaveManagement = () => {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Leave Management System</h1>
-          <p className="text-gray-600">Comprehensive leave management with entitlement tracking and approval workflows</p>
+          <h2 className="text-3xl font-bold text-gray-900">Leave Management</h2>
+          <p className="text-gray-600">
+            Labour Act 2017 compliant leave management system
+          </p>
         </div>
-        <Button onClick={() => setShowRequestDialog(true)} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          New Leave Request
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setShowComplianceDialog(true)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Shield className="h-4 w-4" />
+            Compliance Report
+          </Button>
+          <Button 
+            onClick={generateComplianceReportData}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Export Report
+          </Button>
+          <Button 
+            onClick={() => setShowRequestDialog(true)}
+            className="flex items-center gap-2"
+          >
+            <Calendar className="h-4 w-4" />
+            Request Leave
         </Button>
+        </div>
       </div>
 
+      {/* Labour Act Compliance Alert */}
+      <Alert className="border-green-200 bg-green-50">
+        <CheckCircle className="h-4 w-4 text-green-600" />
+        <AlertDescription className="text-green-800">
+          <strong>Labour Act 2017 Compliance:</strong> This system ensures full compliance with South Sudan Labour Act 2017 
+          including minimum leave entitlements (21 days annual, 90 days maternity), public holiday integration, 
+          and proper working hours calculation.
+        </AlertDescription>
+      </Alert>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="relative">
-          <TabsList className="inline-flex h-12 items-center justify-start gap-1 rounded-md bg-muted p-1 text-muted-foreground w-full overflow-x-auto scrollbar-hide">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
-              <span>Dashboard</span>
-            </TabsTrigger>
-            <TabsTrigger value="requests" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
-              <span>Requests</span>
-            </TabsTrigger>
-            <TabsTrigger value="balances" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
-              <span>Balances</span>
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
-              <span>Reports</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2 min-w-fit px-3 py-2 text-sm whitespace-nowrap">
-              <span>Settings</span>
-            </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="requests">Leave Requests</TabsTrigger>
+          <TabsTrigger value="balances">Leave Balances</TabsTrigger>
+          <TabsTrigger value="calendar">Calendar View</TabsTrigger>
+          <TabsTrigger value="holidays">Public Holidays</TabsTrigger>
+          <TabsTrigger value="policies">Policies & Settings</TabsTrigger>
           </TabsList>
           
-          {/* Mobile: Add swipe indicator */}
-          <div className="flex sm:hidden justify-center mt-2">
-            <div className="flex items-center gap-1 text-xs text-gray-500">
-              <span>Swipe</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
+        {/* Dashboard Tab */}
         <TabsContent value="dashboard" className="space-y-6">
-          {/* Dashboard Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="border-l-4 border-l-yellow-400">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{stats.pendingRequests}</div>
-                <p className="text-xs text-muted-foreground">Awaiting approval</p>
+                <div className="text-2xl font-bold text-blue-600">{dashboardStats.totalRequests}</div>
+                <p className="text-xs text-gray-600 mt-1">This year</p>
               </CardContent>
             </Card>
 
-            <Card className="border-l-4 border-l-green-400">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Approved Today</CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats.approvedToday}</div>
-                <p className="text-xs text-muted-foreground">Today's approvals</p>
+                <div className="text-2xl font-bold text-yellow-600">{dashboardStats.pendingRequests}</div>
+                <p className="text-xs text-gray-600 mt-1">Awaiting decision</p>
               </CardContent>
             </Card>
 
-            <Card className="border-l-4 border-l-blue-400">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">On Leave Today</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Approved</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{stats.onLeaveToday}</div>
-                <p className="text-xs text-muted-foreground">Currently on leave</p>
+                <div className="text-2xl font-bold text-green-600">{dashboardStats.approvedRequests}</div>
+                <p className="text-xs text-gray-600 mt-1">Successfully approved</p>
               </CardContent>
             </Card>
 
-            <Card className="border-l-4 border-l-red-400">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Rejected This Month</CardTitle>
-                <XCircle className="h-4 w-4 text-muted-foreground" />
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Rejected</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{stats.rejectedThisMonth}</div>
-                <p className="text-xs text-muted-foreground">Rejected requests</p>
+                <div className="text-2xl font-bold text-red-600">{dashboardStats.rejectedRequests}</div>
+                <p className="text-xs text-gray-600 mt-1">Not approved</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Urgent</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{dashboardStats.urgentRequests}</div>
+                <p className="text-xs text-gray-600 mt-1">Require immediate attention</p>
               </CardContent>
             </Card>
           </div>
@@ -522,62 +658,48 @@ const LeaveManagement = () => {
           <Card>
             <CardHeader>
               <CardTitle>Recent Leave Requests</CardTitle>
+              <CardDescription>
+                Latest leave requests across the organization
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {leaveRequests?.slice(0, 5).map((request) => (
-                  <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <Avatar>
-                        <AvatarFallback>
-                          {request.employee?.first_name[0]}{request.employee?.last_name[0]}
-                        </AvatarFallback>
-                      </Avatar>
+              {leaveRequests && leaveRequests.slice(0, 5).map((request) => (
+                <div key={request.id} className="flex items-center justify-between p-4 border-b last:border-b-0">
+                  <div className="flex items-center gap-3">
                       <div>
-                        <p className="font-medium">
+                      <div className="font-medium">
                           {request.employee?.first_name} {request.employee?.last_name}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {getLeaveTypeBadge(request.leave_type)} • {request.days_requested} days
-                        </p>
                       </div>
+                      <div className="text-sm text-gray-600">
+                        {request.employee?.employee_id} • {request.employee?.position}
                     </div>
-                    <div className="flex items-center space-x-3">
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getLeaveTypeBadge(request.leave_type)}
                       {getStatusBadge(request.status)}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedRequest(request);
-                          setShowApprovalDialog(true);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                    {getPriorityBadge(request)}
                     </div>
                   </div>
                 ))}
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Leave Requests Tab */}
         <TabsContent value="requests" className="space-y-6">
           {/* Filters */}
           <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 text-gray-400 transform -translate-y-1/2" />
+            <CardContent className="pt-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <Input
-                      placeholder="Search requests..."
+                  placeholder="Search employees, ID, or reason..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
+                  className="w-64"
                     />
-                  </div>
-                </div>
+                
+                <div className="flex gap-4">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="Status" />
@@ -587,8 +709,10 @@ const LeaveManagement = () => {
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="approved">Approved</SelectItem>
                     <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
+
                 <Select value={leaveTypeFilter} onValueChange={setLeaveTypeFilter}>
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Leave Type" />
@@ -603,6 +727,7 @@ const LeaveManagement = () => {
                     <SelectItem value="unpaid">Unpaid Leave</SelectItem>
                   </SelectContent>
                 </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -610,18 +735,22 @@ const LeaveManagement = () => {
           {/* Requests Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Leave Requests ({filteredRequests?.length || 0})</CardTitle>
+              <CardTitle>Leave Requests</CardTitle>
+              <CardDescription>
+                All leave requests with enhanced Labour Act 2017 compliance tracking
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Employee</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Duration</TableHead>
+                    <TableHead>Leave Type</TableHead>
+                    <TableHead>Dates</TableHead>
                     <TableHead>Days</TableHead>
+                    <TableHead>Working Days</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Submitted</TableHead>
+                    <TableHead>Priority</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -629,57 +758,66 @@ const LeaveManagement = () => {
                   {filteredRequests?.map((request) => (
                     <TableRow key={request.id}>
                       <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <Avatar>
-                            <AvatarFallback>
-                              {request.employee?.first_name[0]}{request.employee?.last_name[0]}
-                            </AvatarFallback>
-                          </Avatar>
                           <div>
-                            <p className="font-medium">
+                          <div className="font-medium">
                               {request.employee?.first_name} {request.employee?.last_name}
-                            </p>
-                            <p className="text-sm text-gray-500">{request.employee?.employee_id}</p>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {request.employee?.employee_id}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{getLeaveTypeBadge(request.leave_type)}</TableCell>
+                      <TableCell>
+                        {getLeaveTypeBadge(request.leave_type)}
+                      </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div>{request.start_date}</div>
-                          <div className="text-gray-500">to {request.end_date}</div>
+                          <div>{new Date(request.start_date).toLocaleDateString()}</div>
+                          <div className="text-gray-500">to {new Date(request.end_date).toLocaleDateString()}</div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center font-semibold">{request.days_requested}</TableCell>
-                      <TableCell>{getStatusBadge(request.status)}</TableCell>
-                      <TableCell>{new Date(request.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
-                        <div className="flex space-x-2">
-                          {request.status === 'pending' && (
-                            <>
+                        <div className="font-medium">{request.days_requested}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-blue-600">
+                          {request.working_days_requested || calculateWorkingDays(request.start_date, request.end_date)}
+                        </div>
+                        {request.public_holidays_in_period && request.public_holidays_in_period.length > 0 && (
+                          <div className="text-xs text-gray-500">
+                            Includes holidays
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(request.status)}
+                      </TableCell>
+                      <TableCell>
+                        {getPriorityBadge(request)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
                               <Button
                                 size="sm"
+                            variant="outline"
                                 onClick={() => {
                                   setSelectedRequest(request);
-                                  setShowApprovalDialog(true);
+                              // Show details dialog
                                 }}
-                                className="bg-green-600 hover:bg-green-700"
                               >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Review
+                            <Eye className="h-4 w-4" />
                               </Button>
-                            </>
-                          )}
+                          {hasPermission('leave.approve') && request.status === 'pending' && (
                           <Button
                             size="sm"
-                            variant="outline"
                             onClick={() => {
                               setSelectedRequest(request);
                               setShowApprovalDialog(true);
                             }}
                           >
-                            <Eye className="h-4 w-4" />
+                              Review
                           </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -690,130 +828,111 @@ const LeaveManagement = () => {
           </Card>
         </TabsContent>
 
+        {/* Leave Balances Tab */}
         <TabsContent value="balances" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Employee Leave Balances ({new Date().getFullYear()})</CardTitle>
+              <CardTitle>Employee Leave Balances</CardTitle>
+              <CardDescription>
+                Current leave balances with accrual tracking per Labour Act 2017
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-6">
-                {employees?.map((employee) => {
-                  const employeeBalances = leaveBalances?.filter(b => b.employee_id === employee.id) || [];
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Leave Type</TableHead>
+                    <TableHead>Total Entitlement</TableHead>
+                    <TableHead>Accrued</TableHead>
+                    <TableHead>Used</TableHead>
+                    <TableHead>Remaining</TableHead>
+                    <TableHead>Progress</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {leaveBalances?.map((balance) => {
+                    const employee = leaveRequests?.find(r => r.employee_id === balance.employee_id)?.employee;
+                    const leaveConfig = Object.values(LEAVE_TYPES).find(config => config.dbValue === balance.leave_type);
+                    const progressPercentage = (balance.used_days / balance.total_days) * 100;
                   
                   return (
-                    <Card key={employee.id} className="p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <Avatar>
-                            <AvatarFallback>
-                              {employee.first_name[0]}{employee.last_name[0]}
-                            </AvatarFallback>
-                          </Avatar>
+                      <TableRow key={balance.id}>
+                        <TableCell>
                           <div>
-                            <p className="font-semibold">{employee.first_name} {employee.last_name}</p>
-                            <p className="text-sm text-gray-500">{employee.employee_id} • {employee.position}</p>
+                            <div className="font-medium">
+                              {employee?.first_name} {employee?.last_name}
                           </div>
+                            <div className="text-sm text-gray-600">
+                              {employee?.employee_id}
                         </div>
-                        <Button variant="outline" size="sm">
-                          <Settings className="h-4 w-4 mr-2" />
-                          Adjust
-                        </Button>
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {Object.entries(LEAVE_TYPES).map(([key, type]) => {
-                          const balance = employeeBalances.find(b => b.leave_type === type.dbValue);
-                          const remaining = balance?.remaining_days || type.defaultEntitlement;
-                          const used = balance?.used_days || 0;
-                          const total = balance?.total_days || type.defaultEntitlement;
-                          const percentage = total > 0 ? (used / total) * 100 : 0;
-                          
-                          return (
-                            <div key={key} className="border rounded-lg p-3">
-                              <div className="flex items-center justify-between mb-2">
-                                <p className="text-sm font-medium">{type.icon} {type.name}</p>
-                                <span className="text-sm text-gray-500">{remaining}/{total}</span>
+                        </TableCell>
+                        <TableCell>
+                          {getLeaveTypeBadge(balance.leave_type)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{balance.total_days} days</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-blue-600 font-medium">
+                            {balance.accrued_days || balance.total_days} days
                               </div>
-                              <Progress value={percentage} className="h-2" />
-                              <p className="text-xs text-gray-500 mt-1">
-                                {used} days used • {remaining} remaining
-                              </p>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-red-600 font-medium">{balance.used_days} days</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-green-600 font-medium">{balance.remaining_days} days</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="w-20">
+                            <Progress value={progressPercentage} className="h-2" />
+                            <div className="text-xs text-gray-500 mt-1">
+                              {Math.round(progressPercentage)}% used
                             </div>
-                          );
-                        })}
                       </div>
-                    </Card>
+                        </TableCell>
+                      </TableRow>
                   );
                 })}
-              </div>
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="reports" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Calendar View Tab */}
+        <TabsContent value="calendar" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Leave Type Usage</CardTitle>
+              <CardTitle>Leave Calendar</CardTitle>
+              <CardDescription>
+                Visual overview of approved leaves and public holidays
+              </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {Object.entries(LEAVE_TYPES).map(([key, type]) => {
-                    const usage = leaveRequests?.filter(r => r.leave_type === type.dbValue && r.status === 'approved').length || 0;
-                    return (
-                      <div key={key} className="flex items-center justify-between">
-                        <span className="text-sm">{type.icon} {type.name}</span>
-                        <span className="font-semibold">{usage}</span>
-                      </div>
-                    );
-                  })}
+              {/* Calendar component would go here */}
+              <div className="text-center py-8 text-gray-500">
+                Calendar view is being developed with public holiday integration
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Monthly Trends</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Monthly trend charts coming soon</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Export Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex space-x-4">
-                <Button variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Leave Summary Report
-                </Button>
-                <Button variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Employee Balance Report
-                </Button>
-                <Button variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Monthly Usage Report
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
-        <TabsContent value="settings" className="space-y-6">
+        {/* Public Holidays Tab */}
+        <TabsContent value="holidays" className="space-y-6">
+          <PublicHolidayManagement />
+        </TabsContent>
+
+        {/* Policies & Settings Tab */}
+        <TabsContent value="policies" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Leave Policies</CardTitle>
-              <p className="text-sm text-gray-600">
-                Configure leave types and entitlements. Note: Some leave types are mapped to existing database categories for compatibility.
-              </p>
+              <CardTitle>Leave Policies & Configuration</CardTitle>
+              <CardDescription>
+                Configure leave types and entitlements according to Labour Act 2017
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
@@ -824,11 +943,22 @@ const LeaveManagement = () => {
                       <p className="text-sm text-gray-500">
                         Default entitlement: {type.defaultEntitlement} days • DB Type: {type.dbValue}
                       </p>
+                      <p className="text-xs text-gray-400">
+                        {type.description}
+                      </p>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <div className="text-right">
+                      <div className="text-sm text-gray-600">
+                        Advance notice: {type.advanceNoticeRequired || 0} days
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Carry over: {type.carryOverLimit || 0} days
+                      </div>
+                      <Button variant="outline" size="sm" className="mt-2">
                       <Settings className="h-4 w-4 mr-2" />
                       Configure
                     </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -839,34 +969,22 @@ const LeaveManagement = () => {
 
       {/* Leave Request Dialog */}
       <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Submit Leave Request</DialogTitle>
             <DialogDescription>
-              Request leave by providing the necessary details below.
+              Request time off according to Labour Act 2017 regulations
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="employee">Employee</Label>
-              <Select value={requestForm.employee_id} onValueChange={(value) => setRequestForm(prev => ({ ...prev, employee_id: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select employee" />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees?.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.id}>
-                      {employee.first_name} {employee.last_name} ({employee.employee_id})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="leave-type">Leave Type</Label>
-              <Select value={requestForm.leave_type} onValueChange={(value: keyof typeof LEAVE_TYPES) => setRequestForm(prev => ({ ...prev, leave_type: value }))}>
+                <Label htmlFor="leave-type">Leave Type *</Label>
+                <Select 
+                  value={requestForm.leave_type} 
+                  onValueChange={(value: any) => setRequestForm({ ...requestForm, leave_type: value })}
+                >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -878,162 +996,157 @@ const LeaveManagement = () => {
                   ))}
                 </SelectContent>
               </Select>
+                <p className="text-xs text-gray-500">
+                  {LEAVE_TYPES[requestForm.leave_type]?.description}
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Total Days</Label>
+                <div className="text-lg font-semibold text-blue-600">
+                  {calculateDays(requestForm.start_date, requestForm.end_date)} calendar days
+                </div>
+                <div className="text-sm text-gray-600">
+                  {requestForm.start_date && requestForm.end_date && (
+                    <>Working days: {calculateWorkingDays(requestForm.start_date, requestForm.end_date)}</>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="start-date">Start Date</Label>
+                <Label htmlFor="start-date">Start Date *</Label>
                 <Input
                   id="start-date"
                   type="date"
                   value={requestForm.start_date}
-                  onChange={(e) => setRequestForm(prev => ({ ...prev, start_date: e.target.value }))}
-                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setRequestForm({ ...requestForm, start_date: e.target.value })}
                 />
               </div>
+              
               <div className="space-y-2">
-                <Label htmlFor="end-date">End Date</Label>
+                <Label htmlFor="end-date">End Date *</Label>
                 <Input
                   id="end-date"
                   type="date"
                   value={requestForm.end_date}
-                  onChange={(e) => setRequestForm(prev => ({ ...prev, end_date: e.target.value }))}
-                  min={requestForm.start_date || new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setRequestForm({ ...requestForm, end_date: e.target.value })}
                 />
               </div>
             </div>
 
+            {/* Show public holidays in selected period */}
             {requestForm.start_date && requestForm.end_date && (
               <Alert>
-                <Calculator className="h-4 w-4" />
+                <Info className="h-4 w-4" />
                 <AlertDescription>
-                  Total leave days: <strong>{requestForm.days_requested}</strong>
+                  {(() => {
+                    const holidays = getPublicHolidaysInRange(requestForm.start_date, requestForm.end_date);
+                    if (holidays.length > 0) {
+                      return `Public holidays in this period: ${holidays.map(h => h.name).join(', ')}`;
+                    }
+                    return 'No public holidays in the selected period.';
+                  })()}
                 </AlertDescription>
               </Alert>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="reason">Reason</Label>
+              <Label htmlFor="reason">Reason *</Label>
               <Textarea
                 id="reason"
                 value={requestForm.reason}
-                onChange={(e) => setRequestForm(prev => ({ ...prev, reason: e.target.value }))}
-                placeholder="Please provide a reason for this leave request..."
-                rows={3}
+                onChange={(e) => setRequestForm({ ...requestForm, reason: e.target.value })}
+                placeholder="Please provide a reason for your leave request..."
+                className="min-h-[100px]"
               />
-            </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRequestDialog(false)}>
+            <div className="flex gap-2 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowRequestDialog(false)}
+              >
               Cancel
             </Button>
             <Button 
               onClick={() => submitRequestMutation.mutate(requestForm)}
-              disabled={!requestForm.employee_id || !requestForm.start_date || !requestForm.end_date || !requestForm.reason || submitRequestMutation.isPending}
+                disabled={submitRequestMutation.isPending}
             >
               {submitRequestMutation.isPending ? 'Submitting...' : 'Submit Request'}
             </Button>
-          </DialogFooter>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Approval Dialog */}
       <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Review Leave Request</DialogTitle>
             <DialogDescription>
-              Review and approve or reject this leave request.
+              Approve or reject this leave request
             </DialogDescription>
           </DialogHeader>
           
           {selectedRequest && (
             <div className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-3">Request Details</h4>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-gray-600">Employee:</span>
-                    <p className="font-medium">{selectedRequest.employee?.first_name} {selectedRequest.employee?.last_name}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Employee ID:</span>
-                    <p className="font-medium">{selectedRequest.employee?.employee_id}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Leave Type:</span>
-                    <p>{getLeaveTypeBadge(selectedRequest.leave_type)}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Duration:</span>
-                    <p className="font-medium">{selectedRequest.days_requested} days</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Start Date:</span>
-                    <p className="font-medium">{selectedRequest.start_date}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">End Date:</span>
-                    <p className="font-medium">{selectedRequest.end_date}</p>
-                  </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-semibold">Request Details</h4>
+                <div className="mt-2 space-y-1 text-sm">
+                  <div><strong>Employee:</strong> {selectedRequest.employee?.first_name} {selectedRequest.employee?.last_name}</div>
+                  <div><strong>Leave Type:</strong> {Object.values(LEAVE_TYPES).find(t => t.dbValue === selectedRequest.leave_type)?.name}</div>
+                  <div><strong>Dates:</strong> {new Date(selectedRequest.start_date).toLocaleDateString()} - {new Date(selectedRequest.end_date).toLocaleDateString()}</div>
+                  <div><strong>Days:</strong> {selectedRequest.days_requested} calendar days ({selectedRequest.working_days_requested || calculateWorkingDays(selectedRequest.start_date, selectedRequest.end_date)} working days)</div>
+                  <div><strong>Reason:</strong> {selectedRequest.reason}</div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Reason for Leave</Label>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm">{selectedRequest.reason}</p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="approval-notes">Approval Notes</Label>
+                <Label htmlFor="approval-notes">Comments</Label>
                 <Textarea
                   id="approval-notes"
                   value={approvalNotes}
                   onChange={(e) => setApprovalNotes(e.target.value)}
-                  placeholder="Add your comments..."
-                  rows={3}
+                  placeholder="Add comments about this decision..."
                 />
               </div>
 
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Your decision will be recorded and the employee will be notified.
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
-
-          <DialogFooter className="flex gap-2">
+              <div className="flex gap-2 justify-end">
             <Button 
               variant="outline" 
-              onClick={() => selectedRequest && approveRequestMutation.mutate({ 
-                id: selectedRequest.id, 
-                action: 'reject', 
-                notes: approvalNotes 
-              })}
-              disabled={!approvalNotes.trim() || approveRequestMutation.isPending}
-              className="flex-1"
-            >
-              <XCircle className="h-4 w-4 mr-2" />
+                  onClick={() => setShowApprovalDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  variant="destructive"
+                  onClick={() => approveRequestMutation.mutate({ 
+                    requestId: selectedRequest.id, 
+                    status: 'rejected', 
+                    comments: approvalNotes 
+                  })}
+                  disabled={approveRequestMutation.isPending}
+                >
+                  <X className="h-4 w-4 mr-2" />
               Reject
             </Button>
             <Button 
-              onClick={() => selectedRequest && approveRequestMutation.mutate({ 
-                id: selectedRequest.id, 
-                action: 'approve', 
-                notes: approvalNotes 
-              })}
-              disabled={!approvalNotes.trim() || approveRequestMutation.isPending}
-              className="flex-1 bg-green-600 hover:bg-green-700"
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
+                  onClick={() => approveRequestMutation.mutate({ 
+                    requestId: selectedRequest.id, 
+                    status: 'approved', 
+                    comments: approvalNotes 
+                  })}
+                  disabled={approveRequestMutation.isPending}
+                >
+                  <Check className="h-4 w-4 mr-2" />
               Approve
             </Button>
-          </DialogFooter>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

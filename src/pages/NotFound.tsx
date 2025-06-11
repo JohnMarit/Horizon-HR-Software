@@ -40,7 +40,7 @@ const NotFound = () => {
   const commonPages = [
     { name: "Dashboard", path: "/", icon: <HomeIcon className="h-4 w-4" /> },
     { name: "Employee Records", path: "/employees", icon: <SearchIcon className="h-4 w-4" /> },
-    { name: "Payroll & Leave", path: "/payroll", icon: <MapPinIcon className="h-4 w-4" /> },
+    { name: "Payroll & Tax", path: "/payroll", icon: <MapPinIcon className="h-4 w-4" /> },
     { name: "Training", path: "/training", icon: <InfoIcon className="h-4 w-4" /> },
   ];
 

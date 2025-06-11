@@ -154,7 +154,19 @@ export function Layout() {
     return 'text-green-600';
   };
 
-  const filteredNavItems = navItems.filter(item => canAccess(item.to));
+  const filteredNavItems = navItems.filter(item => {
+    // First check if user can access the item based on permissions
+    if (!canAccess(item.to)) {
+      return false;
+    }
+    
+    // For HR Manager users, exclude "Leave Management" but keep "Leave & Attendance"
+    if (user?.role === 'HR Manager' && item.title === 'Leave Management') {
+      return false;
+    }
+    
+    return true;
+  });
 
   const currentPageTitle = navItems.find(item => item.to === location.pathname)?.title || 'Dashboard';
 

@@ -37,7 +37,7 @@ interface AdminUser {
   id: string;
   name: string;
   email: string;
-  role: 'HR Manager' | 'Recruiter' | 'Department Head' | 'Finance Officer';
+  role: 'System Administrator' | 'HR Manager' | 'Employee';
   department: string;
   phone: string;
   joinDate: string;
@@ -109,7 +109,7 @@ export default function Admin() {
     is2FARequired: false
   });
 
-  // Sample admin users data (in production this would come from API)
+  // Sample admin users data (in production this would come from API) - Updated to 3 roles only
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([
     {
       id: "1",
@@ -122,60 +122,57 @@ export default function Admin() {
       status: "Active",
       lastLogin: "2025-01-20 14:30:00",
       is2FAEnabled: false,
-      permissions: ["recruitment.create", "recruitment.edit", "recruitment.view", "candidates.manage", "interviews.schedule", "team.view", "team.manage", "leave.approve", "performance.evaluate", "training.view", "training.manage", "payroll.view", "payroll.manage", "compliance.view", "communications.view", "users.view", "reports.view"],
+      permissions: [
+        // Consolidated permissions from all HR-related roles
+        "recruitment.create", "recruitment.edit", "recruitment.view", "candidates.manage", "interviews.schedule",
+        "team.view", "team.manage", "leave.approve", "performance.evaluate", "training.view", "training.manage",
+        "payroll.view", "payroll.manage", "finance.approve", "taxes.manage", "reports.financial", "compliance.financial",
+        "goals.manage", "compliance.view", "communications.view", "users.view", "reports.view", "compliance.manage"
+      ],
       securityLevel: "CRITICAL",
       avatar: "/placeholder-avatar.png"
     },
     {
-      id: "2",
-      name: "James Wani",
-      email: "recruiter@horizonbankss.com",
-      role: "Recruiter",
-      department: "Human Resources",
-      phone: "+211 987 654 321",
-      joinDate: "2022-01-20",
-      status: "Active",
-      lastLogin: "2025-01-20 10:15:00",
-      is2FAEnabled: false,
-      permissions: ["recruitment.create", "recruitment.edit", "recruitment.view", "candidates.manage"],
-      securityLevel: "HIGH"
-    },
-    {
       id: "3",
-      name: "Mary Deng",
-      email: "manager@horizonbankss.com",
-      role: "Department Head",
-      department: "Corporate Banking",
+      name: "Grace Ajak",
+      email: "employee@horizonbankss.com",
+      role: "Employee",
+      department: "Personal Banking",
       phone: "+211 555 888 999",
       joinDate: "2020-06-10",
       status: "Active",
       lastLogin: "2025-01-19 16:45:00",
-      is2FAEnabled: true,
-      permissions: ["team.view", "team.manage", "leave.approve", "performance.evaluate"],
-      securityLevel: "HIGH"
+      is2FAEnabled: false,
+      permissions: ["profile.view", "password.change", "performance.view", "certificates.download", "courses.view", "courses.resume", "courses.complete", "leave.request", "payslips.view", "training.view", "training.enroll", "communications.view"],
+      securityLevel: "MEDIUM"
     },
     {
       id: "4",
-      name: "Peter Garang",
-      email: "finance@horizonbankss.com",
-      role: "Finance Officer",
-      department: "Finance & Accounting",
+      name: "Tech Administrator",
+      email: "sysadmin@horizonbankss.com",
+      role: "System Administrator",
+      department: "Information Technology",
       phone: "+211 444 777 555",
       joinDate: "2021-09-05",
       status: "Active",
       lastLogin: "2025-01-20 09:20:00",
       is2FAEnabled: true,
-      permissions: ["payroll.manage", "payroll.view", "taxes.manage", "reports.financial"],
+      permissions: ["system.admin", "users.manage", "logs.view", "backup.manage", "security.configure", "communications.view"],
       securityLevel: "CRITICAL"
     }
   ]);
 
-  // Permission templates based on roles
+  // Permission templates based on roles - Updated to 3 roles only
   const rolePermissions = {
-    "HR Manager": ["recruitment.create", "recruitment.edit", "recruitment.view", "candidates.manage", "interviews.schedule", "team.view", "team.manage", "leave.approve", "performance.evaluate", "training.view", "training.manage", "payroll.view", "payroll.manage", "compliance.view", "communications.view", "users.view", "reports.view"],
-    "Recruiter": ["recruitment.create", "recruitment.edit", "recruitment.view", "candidates.manage", "interviews.schedule"],
-    "Department Head": ["team.view", "team.manage", "leave.approve", "performance.evaluate", "training.view"],
-    "Finance Officer": ["payroll.manage", "payroll.view", "taxes.manage", "reports.financial", "compliance.financial"]
+    "HR Manager": [
+      // Consolidated permissions from HR Manager, Department Head, Recruiter, and Finance Officer
+      "recruitment.create", "recruitment.edit", "recruitment.view", "candidates.manage", "interviews.schedule",
+      "team.view", "team.manage", "leave.approve", "performance.evaluate", "training.view", "training.manage",
+      "payroll.view", "payroll.manage", "finance.approve", "taxes.manage", "reports.financial", "compliance.financial",
+      "goals.manage", "compliance.view", "communications.view", "users.view", "reports.view", "compliance.manage"
+    ],
+    "Employee": ["profile.view", "password.change", "performance.view", "certificates.download", "courses.view", "courses.resume", "courses.complete", "leave.request", "payslips.view", "training.view", "training.enroll", "communications.view"],
+    "System Administrator": ["system.admin", "users.manage", "logs.view", "backup.manage", "security.configure", "communications.view"]
   };
 
   // Utility functions
@@ -514,9 +511,8 @@ Horizon Bank IT Department
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
                   <SelectItem value="HR Manager">HR Manager</SelectItem>
-                  <SelectItem value="Recruiter">Recruiter</SelectItem>
-                  <SelectItem value="Department Head">Department Head</SelectItem>
-                  <SelectItem value="Finance Officer">Finance Officer</SelectItem>
+                  <SelectItem value="Employee">Employee</SelectItem>
+                  <SelectItem value="System Administrator">System Administrator</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -672,9 +668,8 @@ Horizon Bank IT Department
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="HR Manager">HR Manager</SelectItem>
-                    <SelectItem value="Recruiter">Recruiter</SelectItem>
-                    <SelectItem value="Department Head">Department Head</SelectItem>
-                    <SelectItem value="Finance Officer">Finance Officer</SelectItem>
+                    <SelectItem value="Employee">Employee</SelectItem>
+                    <SelectItem value="System Administrator">System Administrator</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -810,9 +805,8 @@ Horizon Bank IT Department
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="HR Manager">HR Manager</SelectItem>
-                      <SelectItem value="Recruiter">Recruiter</SelectItem>
-                      <SelectItem value="Department Head">Department Head</SelectItem>
-                      <SelectItem value="Finance Officer">Finance Officer</SelectItem>
+                      <SelectItem value="Employee">Employee</SelectItem>
+                      <SelectItem value="System Administrator">System Administrator</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

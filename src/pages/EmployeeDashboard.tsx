@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import { 
   DollarSignIcon, 
   CalendarIcon, 
@@ -24,7 +25,10 @@ import {
   AlertTriangleIcon,
   DownloadIcon,
   HistoryIcon,
-  UserIcon
+  UserIcon,
+  ShieldIcon,
+  TrendingUpIcon,
+  EyeIcon
 } from 'lucide-react';
 
 // Types
@@ -64,6 +68,25 @@ interface LeaveBalance {
   remaining: number;
 }
 
+// Add PayrollHistory interface for employee payroll viewing
+interface PayrollHistory {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  payPeriod: string;
+  payDate: string;
+  grossPay: number;
+  netPay: number;
+  payslipUrl: string;
+  status: 'Paid' | 'Pending' | 'Failed';
+  paymentMethod: string;
+  basicSalary: number;
+  allowances: number;
+  deductions: number;
+  taxes: number;
+  socialSecurity: number;
+}
+
 export default function EmployeeDashboard() {
   const { user, addAuditLog } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
@@ -71,6 +94,7 @@ export default function EmployeeDashboard() {
   const [showPaymentApprovalDialog, setShowPaymentApprovalDialog] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<PaymentApproval | null>(null);
   const [approvalNotes, setApprovalNotes] = useState('');
+  const [payrollHistoryFilter, setPayrollHistoryFilter] = useState('all');
 
   // Leave request form
   const [leaveForm, setLeaveForm] = useState({
@@ -98,6 +122,102 @@ export default function EmployeeDashboard() {
       payslipUrl: '#'
     }
   ]);
+
+  // Enhanced payroll history with detailed payment information
+  const [payrollHistory] = useState<PayrollHistory[]>([
+    {
+      id: 'HIST-001',
+      employeeId: user?.id || 'HB005',
+      employeeName: user?.name || 'Grace Ajak',
+      payPeriod: 'January 2025',
+      payDate: '2025-01-31',
+      grossPay: 14000,
+      netPay: 12600,
+      payslipUrl: '/payslips/HIST-001',
+      status: 'Paid',
+      paymentMethod: 'Bank Transfer',
+      basicSalary: 12000,
+      allowances: 2000,
+      deductions: 1400,
+      taxes: 1000,
+      socialSecurity: 400
+    },
+    {
+      id: 'HIST-002',
+      employeeId: user?.id || 'HB005',
+      employeeName: user?.name || 'Grace Ajak',
+      payPeriod: 'December 2024',
+      payDate: '2024-12-31',
+      grossPay: 13500,
+      netPay: 12100,
+      payslipUrl: '/payslips/HIST-002',
+      status: 'Paid',
+      paymentMethod: 'Bank Transfer',
+      basicSalary: 12000,
+      allowances: 1500,
+      deductions: 1400,
+      taxes: 950,
+      socialSecurity: 450
+    },
+    {
+      id: 'HIST-003',
+      employeeId: user?.id || 'HB005',
+      employeeName: user?.name || 'Grace Ajak',
+      payPeriod: 'November 2024',
+      payDate: '2024-11-30',
+      grossPay: 13200,
+      netPay: 11800,
+      payslipUrl: '/payslips/HIST-003',
+      status: 'Paid',
+      paymentMethod: 'Bank Transfer',
+      basicSalary: 12000,
+      allowances: 1200,
+      deductions: 1400,
+      taxes: 920,
+      socialSecurity: 480
+    },
+    {
+      id: 'HIST-004',
+      employeeId: user?.id || 'HB005',
+      employeeName: user?.name || 'Grace Ajak',
+      payPeriod: 'October 2024',
+      payDate: '2024-10-31',
+      grossPay: 13800,
+      netPay: 12400,
+      payslipUrl: '/payslips/HIST-004',
+      status: 'Paid',
+      paymentMethod: 'Bank Transfer',
+      basicSalary: 12000,
+      allowances: 1800,
+      deductions: 1400,
+      taxes: 980,
+      socialSecurity: 420
+    }
+  ]);
+
+  // Filter payroll history based on selected filter
+  const filteredPayrollHistory = payrollHistory.filter(record => {
+    if (payrollHistoryFilter === 'all') return true;
+    if (payrollHistoryFilter === 'current-year') {
+      return new Date(record.payDate).getFullYear() === new Date().getFullYear();
+    }
+    if (payrollHistoryFilter === 'last-6-months') {
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      return new Date(record.payDate) >= sixMonthsAgo;
+    }
+    return true;
+  });
+
+  // Calculate summary statistics
+  const totalPaid = payrollHistory.reduce((sum, record) => sum + record.netPay, 0);
+  const averageMonthlyPay = payrollHistory.length > 0 ? totalPaid / payrollHistory.length : 0;
+  const currentMonthRecord = payrollHistory.find(record => {
+    const recordDate = new Date(record.payDate);
+    const currentDate = new Date();
+    return recordDate.getMonth() === currentDate.getMonth() && 
+           recordDate.getFullYear() === currentDate.getFullYear();
+  });
 
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([
     {
@@ -251,15 +371,22 @@ export default function EmployeeDashboard() {
             <PlusIcon className="mr-2 h-4 w-4" />
             Request Leave
           </Button>
+          <Link to="/benefits">
+            <Button variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50">
+              <ShieldIcon className="mr-2 h-4 w-4" />
+              Benefits
+            </Button>
+          </Link>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="payments">Payment Approvals</TabsTrigger>
+          <TabsTrigger value="payroll-history">Payroll History</TabsTrigger>
           <TabsTrigger value="leave">Leave Management</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="history">Activity History</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -268,25 +395,29 @@ export default function EmployeeDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="border-l-4 border-l-amber-400">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
+                <CardTitle className="text-sm font-medium">Current Month Pay</CardTitle>
                 <DollarSignIcon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-amber-600">{pendingPayments.length}</div>
-                <p className="text-xs text-muted-foreground">Awaiting your approval</p>
+                <div className="text-2xl font-bold text-amber-600">
+                  SSP {currentMonthRecord ? currentMonthRecord.netPay.toLocaleString() : '0'}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {currentMonthRecord ? currentMonthRecord.payPeriod : 'Not yet processed'}
+                </p>
               </CardContent>
             </Card>
 
             <Card className="border-l-4 border-l-blue-400">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Leave Requests</CardTitle>
-                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Average Monthly Pay</CardTitle>
+                <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  {leaveRequests.filter(r => r.status === 'Pending Approval').length}
+                  SSP {averageMonthlyPay.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </div>
-                <p className="text-xs text-muted-foreground">Pending approval</p>
+                <p className="text-xs text-muted-foreground">Based on {payrollHistory.length} months</p>
               </CardContent>
             </Card>
 
@@ -305,20 +436,59 @@ export default function EmployeeDashboard() {
 
             <Card className="border-l-4 border-l-purple-400">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">This Month</CardTitle>
-                <FileTextIcon className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Pending Actions</CardTitle>
+                <AlertTriangleIcon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  {leaveRequests.filter(r => new Date(r.submittedDate).getMonth() === new Date().getMonth()).length}
+                  {pendingPayments.length + leaveRequests.filter(r => r.status === 'Pending Approval').length}
                 </div>
-                <p className="text-xs text-muted-foreground">Leave requests submitted</p>
+                <p className="text-xs text-muted-foreground">Items requiring attention</p>
               </CardContent>
             </Card>
           </div>
 
           {/* Recent Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Payroll */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <HistoryIcon className="h-5 w-5" />
+                  Recent Payroll
+                </CardTitle>
+                <CardDescription>
+                  Your latest salary payments
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {payrollHistory.slice(0, 3).map((record) => (
+                    <div key={record.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{record.payPeriod}</h4>
+                        <p className="text-sm text-gray-500">Gross: SSP {record.grossPay.toLocaleString()}</p>
+                        <p className="text-xs text-gray-400">Paid: {record.payDate}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-green-600">SSP {record.netPay.toLocaleString()}</p>
+                        <Badge className="bg-green-100 text-green-800">Paid</Badge>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="text-center">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setActiveTab('payroll-history')}
+                    >
+                      View Full History
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Pending Payment Approvals */}
             <Card>
               <CardHeader>
@@ -363,36 +533,143 @@ export default function EmployeeDashboard() {
                 )}
               </CardContent>
             </Card>
-
-            {/* Recent Leave Requests */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5" />
-                  Recent Leave Requests
-                </CardTitle>
-                <CardDescription>
-                  Your latest leave applications
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {leaveRequests.slice(0, 3).map((request) => (
-                    <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h4 className="font-medium">{request.leaveType}</h4>
-                        <p className="text-sm text-gray-500">{request.days} days • {request.startDate}</p>
-                        <p className="text-xs text-gray-400">Submitted: {request.submittedDate}</p>
-                      </div>
-                      <div className="text-right">
-                        {getStatusBadge(request.status)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
+        </TabsContent>
+
+        {/* Payroll History Tab */}
+        <TabsContent value="payroll-history" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HistoryIcon className="h-5 w-5" />
+                Payroll History
+              </CardTitle>
+              <CardDescription>
+                View your complete salary payment history and download payslips
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Filter Options */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="flex-1">
+                  <Label htmlFor="period-filter">Filter by Period</Label>
+                  <Select value={payrollHistoryFilter} onValueChange={setPayrollHistoryFilter}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="current-year">Current Year</SelectItem>
+                      <SelectItem value="last-6-months">Last 6 Months</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end">
+                  <Button variant="outline">
+                    <DownloadIcon className="mr-2 h-4 w-4" />
+                    Export All
+                  </Button>
+                </div>
+              </div>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card className="bg-blue-50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-blue-600">Total Payments</p>
+                        <p className="text-2xl font-bold text-blue-800">
+                          SSP {filteredPayrollHistory.reduce((sum, r) => sum + r.netPay, 0).toLocaleString()}
+                        </p>
+                      </div>
+                      <DollarSignIcon className="h-8 w-8 text-blue-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-green-50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-green-600">Payment Records</p>
+                        <p className="text-2xl font-bold text-green-800">{filteredPayrollHistory.length}</p>
+                      </div>
+                      <FileTextIcon className="h-8 w-8 text-green-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-purple-50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-purple-600">Average Pay</p>
+                        <p className="text-2xl font-bold text-purple-800">
+                          SSP {filteredPayrollHistory.length > 0 
+                            ? (filteredPayrollHistory.reduce((sum, r) => sum + r.netPay, 0) / filteredPayrollHistory.length).toLocaleString(undefined, { maximumFractionDigits: 0 })
+                            : '0'}
+                        </p>
+                      </div>
+                      <TrendingUpIcon className="h-8 w-8 text-purple-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Payroll History Table */}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Pay Period</TableHead>
+                    <TableHead>Pay Date</TableHead>
+                    <TableHead>Basic Salary</TableHead>
+                    <TableHead>Allowances</TableHead>
+                    <TableHead>Deductions</TableHead>
+                    <TableHead>Gross Pay</TableHead>
+                    <TableHead>Net Pay</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredPayrollHistory.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell className="font-medium">{record.payPeriod}</TableCell>
+                      <TableCell>{record.payDate}</TableCell>
+                      <TableCell>SSP {record.basicSalary.toLocaleString()}</TableCell>
+                      <TableCell>SSP {record.allowances.toLocaleString()}</TableCell>
+                      <TableCell>SSP {record.deductions.toLocaleString()}</TableCell>
+                      <TableCell>SSP {record.grossPay.toLocaleString()}</TableCell>
+                      <TableCell className="font-semibold text-green-600">
+                        SSP {record.netPay.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={record.status === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                          {record.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline">
+                            <DownloadIcon className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <EyeIcon className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {filteredPayrollHistory.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  <HistoryIcon className="mx-auto h-8 w-8 mb-2" />
+                  <p>No payroll records found for the selected period</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Payment Approvals Tab */}

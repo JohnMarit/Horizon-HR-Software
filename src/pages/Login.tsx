@@ -60,24 +60,6 @@ export default function Login() {
       securityLevel: 'CRITICAL'
     },
     { 
-      email: 'recruiter@horizonbankss.com', 
-      role: 'Recruiter', 
-      password: 'RecruiterSecure2024!',
-      securityLevel: 'HIGH'
-    },
-    { 
-      email: 'manager@horizonbankss.com', 
-      role: 'Department Head', 
-      password: 'ManagerSecure2024!',
-      securityLevel: 'HIGH'
-    },
-    { 
-      email: 'finance@horizonbankss.com', 
-      role: 'Finance Officer', 
-      password: 'FinanceSecure2024!',
-      securityLevel: 'CRITICAL'
-    },
-    { 
       email: 'employee@horizonbankss.com', 
       role: 'Employee', 
       password: 'EmployeeSecure2024!',
